@@ -25,20 +25,23 @@ If you have probleams with `meshlabserver`, you can use `pymeshlab` instead. You
 ```
 
 After checking that you can reproduce the watertight and simplified meshes from the demo examples we can do the same with our data.
-1. Run the script `ycb_to_off.py`. This will convert the ycb objects to `.off`.
-2. Declare environment variables:
+**1. Run the script `ycb_to_off.py`. This will convert the ycb objects to `.off`.**
+
+**2. Declare environment variables:**
 ```bash
 export MESHFUSION_PATH=PATH_TO/external/mesh-fusion
 export build_path_c=PATH_TO_YCB
 ```
-4. Scale meshes:
+
+**3. Scale meshes:**
 ```bash
 python $MESHFUSION_PATH/1_scale.py \
     --in_dir $build_path_c/0_in \
     --out_dir $build_path_c/1_scaled \
     --t_dir $build_path_c/1_transform
 ```
-4. Create depths maps:
+
+**4. Create depths maps:**
 ```bash
 python $MESHFUSION_PATH/2_fusion.py \
   --mode=render \
@@ -46,7 +49,7 @@ python $MESHFUSION_PATH/2_fusion.py \
   --out_dir $build_path_c/2_depth
 ```
 
-5. Produce watertight meshes:
+**5. Produce watertight meshes:**
 ```bash
 python $MESHFUSION_PATH/2_fusion.py \
   --mode=fuse \
@@ -55,7 +58,7 @@ python $MESHFUSION_PATH/2_fusion.py \
   --t_dir $build_path_c/1_transform
 ```
 
-6. Process watertight meshes:
+**6. Process watertight meshes:**
 ```bash
 python sample_mesh.py PATH_TO_YCB/2_watertight \
       --n_proc $NPROC --resize \
