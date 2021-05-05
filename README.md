@@ -29,44 +29,24 @@ After checking that you can reproduce the watertight and simplified meshes from 
 
 **1. Run the script `ycb_to_off.py`. This will scale and convert the ycb objects to `.off`.**
 
-**2. Declare environment variables:**
+**2. Run ``build_ybc.sh``**
+
+Move the script to the scripts folder:
 ```bash
-export MESHFUSION_PATH=PATH_TO/external/mesh-fusion
-export build_path_c=PATH_TO_YCB
+mv build_ybc.sh PATH/TO/occupancy_networks/scripts
 ```
 
-**3. Scale meshes:**
+Run the script:
 ```bash
-python $MESHFUSION_PATH/1_scale.py \
-    --in_dir $build_path_c/0_in \
-    --out_dir $build_path_c/1_scaled \
-    --t_dir $build_path_c/1_transform
+bash build_ybc.sh
 ```
+This will scale the meshes, create the depth maps, and produce and process the watertight meshes
 
-**4. Create depths maps:**
-```bash
-python $MESHFUSION_PATH/2_fusion.py \
-  --mode=render \
-  --in_dir $build_path_c/1_scaled \
-  --out_dir $build_path_c/2_depth
-```
 
-**5. Produce watertight meshes:**
+**3. Run ``grasps_to_con.py``:**
 ```bash
-python $MESHFUSION_PATH/2_fusion.py \
-  --mode=fuse \
-  --in_dir $build_path_c/2_depth \
-  --out_dir $build_path_c/2_watertight \
-  --t_dir $build_path_c/1_transform
+grasps_to_con.py \
+    --pressupre_pth PATH/TO/manopth/outputs/graspit_to_mano/ycb/ \
+    --ycb_pth PATH/TO/occupancy_networks/data/ycb
 ```
-
-**6. Process watertight meshes:**
-```bash
-python sample_mesh.py PATH_TO_YCB/2_watertight \
-      --n_proc $NPROC --resize \
-      --bbox_in_folder PATH_TO_YCB/0_in \
-      --pointcloud_folder PATH_TO_YCB/4_pointcloud \
-      --points_folder PATH_TO_YCB/4_points \
-      --mesh_folder PATH_TO_YCB/4_watertight_scaled \
-      --packbits --float16
-```
+This will generate the npz files needed to run the model from Convolutional Occupancy Networks.
