@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to where 0_in is located
-build_path_c=../data/ybc
+build_path_c=../data/ycb
 MESHFUSION_PATH=../external/mesh-fusion
 NPROC=12
 export DISPLAY=:2
