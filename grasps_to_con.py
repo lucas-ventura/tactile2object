@@ -110,14 +110,14 @@ def main(args):
         if not os.path.exists(obj_dir):
             os.makedirs(obj_dir)
 
-        src_pth = os.path.join(pressure_points_path, f"{obj_name}.npz")
-        dst_pth = os.path.join(obj_dir, "pointcloud.npz")
+        src_pth_ps = os.path.join(args.ycb_pth, "4_points", f"{obj_name}.npz")
+        dst_pth_ps = os.path.join(obj_dir, "points.npz")
+        copyfile(src_pth_ps, dst_pth_ps)
 
-        copyfile(src_pth, dst_pth)
+        src_pth_pcd = os.path.join(pressure_points_path, f"{obj_name}.npz")
+        dst_pth_pcd = os.path.join(obj_dir, "pointcloud.npz")
+        copyfile(src_pth_pcd, dst_pth_pcd)
 
-        src_pth = src_pth.replace("6_pressure_points", "4_points")
-        dst_pth = dst_pth.replace("pointcloud.npz", "points.npz")
-        copyfile(src_pth, dst_pth)
 
     # Create splits
     print("Create splits")
