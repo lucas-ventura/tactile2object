@@ -50,3 +50,10 @@ grasps_to_con.py \
     --ycb_pth PATH/TO/occupancy_networks/data/ycb
 ```
 This will generate the npz files needed to run the model from Convolutional Occupancy Networks.
+
+
+**4. Create symbolic link to dataset:**
+```bash
+cd PATH/TO/convolutional_occupancy_networks
+ln -s PATH/TO/occupancy_networks/data/ycb/ycb_con/ data/
+```
