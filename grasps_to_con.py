@@ -3,19 +3,22 @@ import open3d as o3d
 import numpy as np
 import pickle
 import argparse
+from shutil import copyfile
 
 parser = argparse.ArgumentParser(
     description='Generate data for Convolutional Occupancy Networks'
 )
 
+# TODO: delete default
 parser.add_argument('--pressupre_pth', type=str,
-                    default="manopth/outputs/graspit_to_mano/ycb/",
+                    default="C:/Users/lucas/Desktop/UPC/MIT/manopth/outputs/graspit_to_mano/ycb/",
                     help="Path to the directory with all the folders with the pickle pressure files")
 parser.add_argument('--ycb_pth', type=str,
-                    default="ycb",
+                    default="C:/Users/lucas/Desktop/UPC/MIT/tactile2object/ycb",
                     help="PATH/TO/occupancy_networks/data/ycb")
 
 get_obj_name = lambda name: name[:len(name) - 14]
+
 
 def main(args):
     pressure_pointcloud_path = os.path.join(args.ycb_pth, "5_pressure_pointcloud")
@@ -92,6 +95,60 @@ def main(args):
                  loc=pc_npz['loc'],
                  scale=pc_npz['scale']
                  )
+
+
+    # Create dataset
+    print("Generating ycb_con folder")
+    dataset_pth = os.path.join(args.ycb_pth, "ycb_con")
+
+    if not os.path.exists(dataset_pth):
+        os.makedirs(dataset_pth)
+
+    for obj_name in obj_names:
+        obj_dir = os.path.join(dataset_pth, obj_name)
+
+        if not os.path.exists(obj_dir):
+            os.makedirs(obj_dir)
+
+        src_pth = os.path.join(pressure_points_path, f"{obj_name}.npz")
+        dst_pth = os.path.join(obj_dir, "points.npz")
+
+        copyfile(src_pth, dst_pth)
+
+        src_pth = os.path.join(pressure_points_path, f"{obj_name}.npz")
+        dst_pth = os.path.join(obj_dir, "points.npz")
+
+        copyfile(src_pth, dst_pth)
+
+        src_pth = src_pth.replace("6_pressure_points", "4_pointcloud")
+        dst_pth = dst_pth.replace("points.npz", "pointcloud.npz")
+        copyfile(src_pth, dst_pth)
+
+    # Create splits
+    print("Create splits")
+    n = len(obj_names)
+    n_train, n_val = int(n * 0.6), int(n * 0.2)
+    n_test = n - n_train - n_val
+
+    np.random.shuffle(obj_names)
+
+    training, val, test = obj_names[:n_train], obj_names[n_train:(n_train + n_val)], obj_names[-n_test]
+    train_pth = os.path.join(dataset_pth, 'train.lst')
+    val_pth = os.path.join(dataset_pth, 'val.lst')
+    test_pth = os.path.join(dataset_pth, 'test.lst')
+
+    with open(train_pth, 'w') as filehandle:
+        for obj_name in training:
+            filehandle.write('%s\n' % obj_name)
+
+    with open(val_pth, 'w') as filehandle:
+        for obj_name in val:
+            filehandle.write('%s\n' % obj_name)
+
+    with open(test_pth, 'w') as filehandle:
+        for obj_name in test:
+            filehandle.write('%s\n' % obj_name)
+
 
 if __name__ == '__main__':
     main(parser.parse_args())
