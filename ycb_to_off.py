@@ -8,7 +8,8 @@ parser = argparse.ArgumentParser(description='Convert objects from ply to off')
 parser.add_argument('--ycb_pth', type=str,
                     default='',
                     help="Path to ycb folder")  
-    
+parser.add_argument('--scale', default=1000, help="scales to apply to each model")
+
 def main(args):
   # Create directories
   dirs = ["0_in", "1_scaled", "1_transform", "2_depth", "2_watertight", "4_points", "4_pointcloud", "4_watertight_scaled"]
@@ -28,6 +29,10 @@ def main(args):
       try:
           ms = pymeshlab.MeshSet()
           ms.load_new_mesh(ply_pth)
+          
+          # Scale object
+          ms.transform_scale_normalize(axisx=args.scale, uniformflag=True)
+          
           ms.save_current_mesh(out_pth,
                                save_vertex_color = False,
                                save_vertex_coord = False, 
