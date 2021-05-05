@@ -4,7 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Convert objects from ply to off')
 parser.add_argument('--ycb_in', type=str,
-                    default='C:/Users/lucas/Desktop/UPC/MIT/graspit/YBC_dataset/models/ycb',
+                    default='C:/Users/lucas/Desktop/UPC/MIT/graspit/YCB_dataset/models/ycb',
                     help="Path to models/ycb")
 parser.add_argument('--ycb_out', type=str,
                     default='ycb',
