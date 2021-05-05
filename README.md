@@ -25,6 +25,8 @@ If you have probleams with `meshlabserver`, you can use `pymeshlab` instead. You
 ```
 
 After checking that you can reproduce the watertight and simplified meshes from the demo examples we can do the same with our data.
+
+
 **1. Run the script `ycb_to_off.py`. This will convert the ycb objects to `.off`.**
 
 **2. Declare environment variables:**
