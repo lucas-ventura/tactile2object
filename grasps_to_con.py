@@ -70,13 +70,13 @@ def main(args):
     # Generate data for Convolutional Occupancy Networks
     # It generates the pointcloud.npz files with the pressure info
     print("Converting data for Convolutional Occupancy Networks")
-    pressure_points_path = os.path.join(args.ycb_pth, "6_pressure_points")
+    pressure_points_path = os.path.join(ycb_dir, "6_pressure_pointcloud")
 
     if not os.path.exists(pressure_points_path):
         os.makedirs(pressure_points_path)
 
     for obj_name in obj_names:
-        pc_pth = os.path.join(args.ycb_pth, "4_pointcloud", f"{obj_name}.npz")
+        pc_pth = os.path.join(ycb_dir, "4_pointcloud", f"{obj_name}.npz")
         pc_npz = np.load(pc_pth)
 
         translation = pc_npz['loc'].tolist()
@@ -111,17 +111,12 @@ def main(args):
             os.makedirs(obj_dir)
 
         src_pth = os.path.join(pressure_points_path, f"{obj_name}.npz")
-        dst_pth = os.path.join(obj_dir, "points.npz")
+        dst_pth = os.path.join(obj_dir, "pointcloud.npz")
 
         copyfile(src_pth, dst_pth)
 
-        src_pth = os.path.join(pressure_points_path, f"{obj_name}.npz")
-        dst_pth = os.path.join(obj_dir, "points.npz")
-
-        copyfile(src_pth, dst_pth)
-
-        src_pth = src_pth.replace("6_pressure_points", "4_pointcloud")
-        dst_pth = dst_pth.replace("points.npz", "pointcloud.npz")
+        src_pth = src_pth.replace("6_pressure_points", "4_points")
+        dst_pth = dst_pth.replace("pointcloud.npz", "points.npz")
         copyfile(src_pth, dst_pth)
 
     # Create splits
@@ -132,7 +127,7 @@ def main(args):
 
     np.random.shuffle(obj_names)
 
-    training, val, test = obj_names[:n_train], obj_names[n_train:(n_train + n_val)], obj_names[-n_test]
+    training, val, test = obj_names[:n_train], obj_names[n_train:(n_train + n_val)], obj_names[-n_test:]
     train_pth = os.path.join(dataset_pth, 'train.lst')
     val_pth = os.path.join(dataset_pth, 'val.lst')
     test_pth = os.path.join(dataset_pth, 'test.lst')
