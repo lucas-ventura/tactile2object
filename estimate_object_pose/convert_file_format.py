@@ -30,7 +30,7 @@ def main(args):
         # Save object
         out_obj = off_obj.replace(".off", "." + args.out_format)
         out_pth = os.path.join(args.pth_out, out_obj)
-        ms.save_current_mesh(out_pth, save_face_color=False)
+        ms.save_current_mesh(out_pth, save_vertex_coord=False)
 
 
 if __name__ == '__main__':
