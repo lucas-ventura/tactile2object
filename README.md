@@ -5,7 +5,7 @@
 First, we need to generate the grasps using the graspIt software. You can generate grasps from the YCB dataset following the instructions [here](https://github.com/lucas-ventura/mano_grasp#generate-grasps-from-ybc-dataset).
 
 ## Prepare objects for the [Convolutional Occupancy Networks](https://github.com/autonomousvision/convolutional_occupancy_networks) model
-We will follow the instructions from [Occupancy Networks](https://github.com/autonomousvision/occupancy_networks). Please read the [readme](https://github.com/autonomousvision/occupancy_networks/tree/master/external/mesh-fusion) and try their examples. 
+We will follow the instructions from [Occupancy Networks](https://github.com/autonomousvision/occupancy_networks). Please read their [readme](https://github.com/autonomousvision/occupancy_networks/tree/master/external/mesh-fusion) and try their examples. 
 
 If you have probleams with `meshlabserver`, you can use `pymeshlab` instead. You will need to do this modifications to the `3_simplify.py` script:
 ```diff
@@ -56,4 +56,15 @@ This will generate the npz files needed to run the model from Convolutional Occu
 ```bash
 cd PATH/TO/convolutional_occupancy_networks
 ln -s PATH/TO/occupancy_networks/data/ycb/ycb_con/ data/
+```
+
+## Real data
+### Convert objects
+Convert objects to ply.
+You can do that by running the convert_file_format script:
+```bash
+python estimate_object_pose/convert_file_format.py \ 
+    --pth_off PATH/TO/off_files
+    --pth_out PATH/TO/output_folder
+    --out_format FILE_OUT_FORMAT
 ```
