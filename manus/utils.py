@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 from pyquaternion import Quaternion
-
 from collections import OrderedDict
+import open3d as o3d
 
 # Lengths of the Distal Proximal
 tips_lengths = OrderedDict()
@@ -121,3 +121,93 @@ class Data:
         self.positions_FT = positions_FT
 
         return positions_FT
+
+
+def pick_points(pcd):
+    """
+    http://www.open3d.org/docs/tutorial/Advanced/interactive_visualization.html
+    :param pcd: open3d point cloud data
+    :return: None
+    """
+    print("")
+    print("1) Please pick at least three correspondences using [shift + left click]")
+    print("   Press [shift + right click] to undo point picking")
+    print("2) Afther picking points, press q for close the window")
+    vis = o3d.visualization.VisualizerWithEditing()
+    vis.create_window()
+    vis.add_geometry(pcd)
+    vis.run()  # user picks points
+    vis.destroy_window()
+    print("")
+    return vis.get_picked_points()
+
+def load_point_cloud(mesh_path: str):
+    """
+    Currently o3d doesn't support obj file, thus we need some
+    hacky solution here
+    :param mesh_path: Full path to an ply/obj file
+    :return:
+    """
+    if mesh_path.endswith('.ply'):
+        return o3d.io.read_point_cloud(mesh_path)
+    elif mesh_path.endswith('.obj'):
+        raise NotImplementedError()
+    else:
+        raise RuntimeError('Unknown data format')
+
+
+def get_touch_locations_real(positions, bone, frames, scale=1000):
+    """Get xyz positions from the real data
+
+    Parameters
+    ----------
+    positions: pandas.DataFrame
+        DataFrame containing the bone and frames information
+    bone: str
+        Bone that uses to touch
+    frames: list
+        Frames which are touching the object
+    scale:
+        Scale real data to match simulated data
+    """
+
+    touch_locations = np.zeros((len(frames), 3))
+
+    for i, frame in enumerate(frames):
+        touch_locations[i, :] = positions.loc[frame, bone] * scale
+
+    return touch_locations
+
+
+def get_touch_locations_simu(mesh_pth, scale=1., picked_ids=None):
+    """ Get xyz positions from the simulated data
+
+    Parameters
+    ----------
+    mesh_pth: str
+        Path to mesh file
+    scale: float
+        Scale to apply to the real object to match the real data
+    picked_ids: list
+        If the points are know, you can input them
+    """
+
+    assert os.path.exists(mesh_pth)
+    pcd = load_point_cloud(mesh_pth)
+    pcd.paint_uniform_color([0.3, 0.3, 0.3])
+
+    # Scale pointcloud
+    pcd.scale(scale, center=pcd.get_center())  # center=(0, 0, 0) pcd.get_center()
+
+    if picked_ids == None:
+        picked_ids = pick_points(pcd)
+
+    # Extract the keypoint in world
+    point_cloud = np.asarray(pcd.points)
+    touch_locations = []
+    for point_id in picked_ids:
+        point_in_world = point_cloud[point_id, :]
+        touch_locations.append([float(point_in_world[0]), float(point_in_world[1]), float(point_in_world[2])])
+
+    return np.array(touch_locations)
+
