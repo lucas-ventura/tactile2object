@@ -209,5 +209,40 @@ def get_touch_locations_simu(mesh_pth, scale=1., picked_ids=None):
         point_in_world = point_cloud[point_id, :]
         touch_locations.append([float(point_in_world[0]), float(point_in_world[1]), float(point_in_world[2])])
 
-    return np.array(touch_locations)
+    return np.array(touch_locations), pcd
 
+
+def get_lines(points1, points2):
+    """Creates lines that connect points1 with points2
+    """
+    line_points = []
+    line_lines = []
+
+    for i in range(points1.shape[0]):
+        line_points.append(points1[i, :])
+        line_points.append(points2[i, :])
+
+        line_lines.append([i * 2, i * 2 + 1])
+
+    line_points = np.array(line_points)
+    line_lines = np.array(line_lines)
+
+    line_set = o3d.geometry.LineSet()
+    line_set.points = o3d.utility.Vector3dVector(line_points)
+    line_set.lines = o3d.utility.Vector2iVector(line_lines)
+    colors = [[0, 0, 1] for i in range(len(line_lines))]
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+
+    return line_set
+
+
+def get_balls(points, color=[1, 0, 0], radius=3.):
+    """Given some points, it returns balls in open3d in that position"""
+    balls = []
+
+    for xyz in points:
+        ball = o3d.geometry.TriangleMesh.create_sphere(radius=radius).translate((xyz))
+        ball.paint_uniform_color(color)
+        balls.append(ball)
+
+    return balls
