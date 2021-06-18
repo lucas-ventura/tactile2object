@@ -59,3 +59,33 @@ def plot_bar_values(values):
     ax.set_ylabel("Distance")
     ax.set_title("Distance between pointclouds")
     plt.show()
+
+
+def icp_svd(P, Q, iterations=3, kernel=lambda diff: 1.0):
+    """Perform ICP using SVD."""
+    center_of_Q, Q_centered = center_data(Q)
+    norm_values = []
+    R_values = []
+    t_values = []
+    P_values = [P.copy()]
+    P_copy = P.copy()
+    corresp_values = []
+    exclude_indices = []
+    for i in range(iterations):
+        center_of_P, P_centered = center_data(P_copy, exclude_indices=exclude_indices)
+
+        correspondences = get_correspondence_indices(P_centered, Q_centered)
+        corresp_values.append(correspondences)
+        norm_values.append(np.linalg.norm(P_centered - Q_centered))
+        cov, exclude_indices = compute_cross_covariance(P_centered, Q_centered, correspondences, kernel)
+        U, S, V_T = np.linalg.svd(cov)
+        R = U.dot(V_T)
+        t = center_of_Q - R.dot(center_of_P)
+
+        P_copy = R.dot(P_copy) + t
+        P_values.append(P_copy)
+        R_values.append(R)
+        t_values.append(t)
+    corresp_values.append(corresp_values[-1])
+
+    return P_values, norm_values, corresp_values, R_values, t_values
