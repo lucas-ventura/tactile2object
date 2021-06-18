@@ -2,6 +2,7 @@
 
 from matplotlib import pyplot as plt
 import seaborn as sns
+import numpy as np
 
 def center_data(data, exclude_indices=[]):
     reduced_data = np.delete(data, exclude_indices, axis=1)
