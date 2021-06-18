@@ -21,7 +21,31 @@ tips_lengths['RightFifth'] = np.array([0., -0.018384, 0.])
 
 
 class Data:
+    """
+    Import data from the excel file.
+
+    Attributes
+    ----------
+    positions_xyz: pandas.DataFrame
+        Data positions with x y z in separate columns
+    orientations_xyz: pandas.DataFrame
+        Data orientations with x y z in separate columns
+    labels: np.array
+        Labels of the above data
+    positions: pandas.DataFrame
+        Data positions with xyz in the same column
+    orientations: pandas.DataFrame
+        Data orientations with xyz in the same column
+    positions_FT: pandas.DataFrame
+        Data positions with fingertip positions
+
+    Methods
+    -------
+    getFingertips
+        Computes the fingertip positions
+    """
     def __init__(self, xlsx_pth):
+
 
         # Get labels
         labels_l = pd.read_excel(xlsx_pth, sheet_name="fingerTrackingSegmentsLeft").to_numpy().T[0]
