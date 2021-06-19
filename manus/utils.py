@@ -4,6 +4,8 @@ import os
 from pyquaternion import Quaternion
 from collections import OrderedDict
 import open3d as o3d
+from matplotlib import pyplot as plt
+import seaborn as sns
 
 # Lengths of the Distal Proximal
 tips_lengths = OrderedDict()
@@ -319,3 +321,17 @@ def rigid_transform_3D(A, B):
     t = -R @ centroid_A + centroid_B
 
     return R, t
+
+
+def plot_bar_values(values):
+    plt.rcParams['figure.dpi'] = 100
+    plt.rcParams['savefig.dpi'] = 100
+    sns.set_theme()
+    fig = plt.figure(figsize=(4, 4))
+    ax = fig.add_subplot(111)
+    ax.bar(["Before", "After"], values[:2])
+    ax.grid(True)
+    ax.set_ylim(0)
+    ax.set_ylabel("Distance")
+    ax.set_title("Distance between pointclouds")
+    plt.show()
