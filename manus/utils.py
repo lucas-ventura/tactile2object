@@ -214,7 +214,7 @@ def get_touch_locations_simu(mesh_pth, scale=1., picked_ids=None):
     return np.array(touch_locations), pcd
 
 
-def get_lines(points1, points2):
+def get_lines(points1, points2, color=[0, 0, 1]):
     """Creates lines that connect points1 with points2
     """
     line_points = []
@@ -232,7 +232,7 @@ def get_lines(points1, points2):
     line_set = o3d.geometry.LineSet()
     line_set.points = o3d.utility.Vector3dVector(line_points)
     line_set.lines = o3d.utility.Vector2iVector(line_lines)
-    colors = [[0, 0, 1] for i in range(len(line_lines))]
+    colors = [color for i in range(len(line_lines))]
     line_set.colors = o3d.utility.Vector3dVector(colors)
 
     return line_set
