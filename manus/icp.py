@@ -53,7 +53,7 @@ def plot_bar_values(values):
     sns.set_theme()
     fig = plt.figure(figsize=(4, 4))
     ax = fig.add_subplot(111)
-    ax.bar(["Before ICP", "After ICP"], values[:2])
+    ax.bar(["Before", "After"], values[:2])
     ax.grid(True)
     ax.set_ylim(0)
     ax.set_ylabel("Distance")
