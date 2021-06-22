@@ -323,13 +323,14 @@ def rigid_transform_3D(A, B):
     return R, t
 
 
-def plot_bar_values(values):
+def plot_bar_values(norm_before, norm_after):
+    values = [norm_before, norm_after]
     plt.rcParams['figure.dpi'] = 100
     plt.rcParams['savefig.dpi'] = 100
     sns.set_theme()
     fig = plt.figure(figsize=(4, 4))
     ax = fig.add_subplot(111)
-    ax.bar(["Before", "After"], values[:2])
+    ax.bar(["Before", "After"], values)
     ax.grid(True)
     ax.set_ylim(0)
     ax.set_ylabel("Distance")
