@@ -19,4 +19,4 @@ This can also be seen in ```recorded_data.xlsx```.
 This will generate the target left and right points for the MANO model.
 
 ### Run ``manus_to_mano.py``
-Go to the manopth project and run ``manus_to_mano.py``
+Go to the [manopth](https://github.com/lucas-ventura/manopth) project and run ``manus_to_mano.py``
