@@ -13,3 +13,7 @@ You should have the following sheets:
 
 
 This can also be seen in ```recorded_data.xlsx```.
+
+
+### Run ``prepare_data.py``
+This will generate the target left and right points for the MANO model.
