@@ -153,9 +153,8 @@ class RGBD:
         return rgbd
 
 
-def demo_crop_geometry(pcd):
+def crop_geometry(pcd):
     # ICP Registration open3D
-    print("Demo for manual geometry cropping")
     print(
         "1) Press 'Y' twice to align geometry with negative direction of y-axis"
     )
@@ -195,9 +194,9 @@ def pick_points(pcd):
     return vis.get_picked_points()
 
 
-def demo_manual_registration(source, target):
+def manual_registration(source, target):
     # ICP Registration open3D
-    print("Demo for manual ICP")
+    print("Manual ICP")
     print("Visualization of two point clouds before manual alignment")
     draw_registration_result(source, target, np.identity(4))
 
