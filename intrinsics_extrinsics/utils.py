@@ -4,6 +4,7 @@ from xml.etree import cElementTree as ElementTree
 import numpy as np
 import os
 import open3d as o3d
+import copy
 import matplotlib.image as mpimg
 
 class XmlListConfig(list):
@@ -94,7 +95,7 @@ class Intrinsics:
         dimx_new, dimy_new = W, H
 
         scale = dimy_new / dimy_old
-        print('scale intrinsics', scale)
+        # print('scale intrinsics', scale)
 
         fx_new = fx_old * scale
         fy_new = fy_old * scale
@@ -125,8 +126,6 @@ class Extrinsics:
         return T_wc
 
 
-
-
 def get_rgbd(color_pth, depth_pth, cam_scale=1):
     depth = o3d.io.read_image(depth_pth)
     color = o3d.io.read_image(color_pth)
@@ -152,3 +151,79 @@ class RGBD:
         rgbd = get_rgbd(color_pth, depth_pth)
 
         return rgbd
+
+
+def demo_crop_geometry(pcd):
+    # ICP Registration open3D
+    print("Demo for manual geometry cropping")
+    print(
+        "1) Press 'Y' twice to align geometry with negative direction of y-axis"
+    )
+    print("2) Press 'K' to lock screen and to switch to selection mode")
+    print("3) Drag for rectangle selection,")
+    print("   or use ctrl + left click for polygon selection")
+    print("4) Press 'C' to get a selected geometry and to save it")
+    print("5) Press 'F' to switch to freeview mode")
+
+    o3d.visualization.draw_geometries_with_editing([pcd])
+
+
+def draw_registration_result(source, target, transformation):
+    # ICP Registration open3D
+    source_temp = copy.deepcopy(source)
+    target_temp = copy.deepcopy(target)
+    source_temp.paint_uniform_color([1, 0.706, 0])
+    # target_temp.paint_uniform_color([0, 0.651, 0.929])
+    source_temp.transform(transformation)
+    o3d.visualization.draw_geometries([source_temp, target_temp])
+
+
+def pick_points(pcd):
+    # ICP Registration open3D
+    print("")
+    print(
+        "1) Please pick at least three correspondences using [shift + left click]"
+    )
+    print("   Press [shift + right click] to undo point picking")
+    print("2) After picking points, press 'Q' to close the window")
+    vis = o3d.visualization.VisualizerWithEditing()
+    vis.create_window()
+    vis.add_geometry(pcd)
+    vis.run()  # user picks points
+    vis.destroy_window()
+    print("")
+    return vis.get_picked_points()
+
+
+def demo_manual_registration(source, target):
+    # ICP Registration open3D
+    print("Demo for manual ICP")
+    print("Visualization of two point clouds before manual alignment")
+    draw_registration_result(source, target, np.identity(4))
+
+    # pick points from two point clouds and builds correspondences
+    picked_id_source = pick_points(source)
+    picked_id_target = pick_points(target)
+    assert (len(picked_id_source) >= 3 and len(picked_id_target) >= 3)
+    assert (len(picked_id_source) == len(picked_id_target))
+    corr = np.zeros((len(picked_id_source), 2))
+    corr[:, 0] = picked_id_source
+    corr[:, 1] = picked_id_target
+
+    # estimate rough transformation using correspondences
+    print("Compute a rough transform using the correspondences given by user")
+    p2p = o3d.pipelines.registration.TransformationEstimationPointToPoint()
+    trans_init = p2p.compute_transformation(source, target,
+                                            o3d.utility.Vector2iVector(corr))
+
+    # point-to-point ICP for refinement
+    print("Perform point-to-point ICP refinement")
+    threshold = 0.03  # 3cm distance threshold
+    reg_p2p = o3d.pipelines.registration.registration_icp(
+        source, target, threshold, trans_init,
+        o3d.pipelines.registration.TransformationEstimationPointToPoint())
+    draw_registration_result(source, target, reg_p2p.transformation)
+    print("")
+
+    return reg_p2p.transformation
+
