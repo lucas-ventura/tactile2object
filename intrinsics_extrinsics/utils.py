@@ -82,7 +82,7 @@ class Intrinsics:
     def __init__(self, xml_dir):
         self.xml_dir = xml_dir
 
-    def from_camera(self, camera="020122061233", H=640, W=480):
+    def from_camera(self, camera="020122061233", W=640, H=480):
         intrinsic_pth = os.path.join(self.xml_dir, f"{camera}.xml")
         xmldict = readXML(intrinsic_pth)
         params = [float(param) for param in xmldict['camera']['camera_model']['params'][3:-3].split(";")]
@@ -91,12 +91,17 @@ class Intrinsics:
 
         dimx_old = int(xmldict['camera']['camera_model']['width'])
         dimy_old = int(xmldict['camera']['camera_model']['height'])
-        dimx_new, dimy_new = H, W
+        dimx_new, dimy_new = W, H
 
-        fx_new = (dimx_new / dimx_old) * fx_old
-        fy_new = (dimy_new / dimy_old) * fy_old
+        scale = dimy_new / dimy_old
+        print('scale intrinsics', scale)
 
-        intrinsic = o3d.camera.PinholeCameraIntrinsic(W, H, fx_new, fy_new, cx, cy)
+        fx_new = fx_old * scale
+        fy_new = fy_old * scale
+        cx_new = cx / dimx_old * dimx_new
+        cy_new = cy / dimy_old * dimy_new
+
+        intrinsic = o3d.camera.PinholeCameraIntrinsic(W, H, fx_new, fy_new, cx_new, cy_new)
 
         return intrinsic
 
@@ -123,14 +128,11 @@ class Extrinsics:
 
 
 def get_rgbd(color_pth, depth_pth, cam_scale=1):
-    depth = mpimg.imread(depth_pth)
-    color = mpimg.imread(color_pth)
+    depth = o3d.io.read_image(depth_pth)
+    color = o3d.io.read_image(color_pth)
 
-    img = o3d.geometry.Image(color.astype(np.uint8))
-    depth = np.asarray(depth).astype(np.float32) / cam_scale
-    depth = o3d.geometry.Image(depth)
-
-    rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(img, depth)
+    rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
+        color, depth, convert_rgb_to_intensity=False)
 
     return rgbd
 
