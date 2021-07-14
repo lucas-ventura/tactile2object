@@ -142,6 +142,14 @@ class Intrinsics:
 
         return intrinsic
 
+    def params_from_camera(self, camera="020122061233", W=640, H=480):
+        try:
+            fx, fy, cx, cy = self.camera_intrinsics[camera]
+        except:
+            fx, fy, cx, cy = self.read_xml(camera, W, H)
+            self.camera_intrinsics[camera] = fx, fy, cx, cy
+
+        return fx, fy, cx, cy
 
 class Extrinsics:
     def __init__(self, xml_dir, default_camera="020122061233"):
@@ -159,7 +167,7 @@ class Extrinsics:
         T_wc = np.array(T_wc)
         T_wc = T_wc.astype(np.float64)
 
-        return T_wc
+        return np.linalg.inv(T_wc)
 
 
 def get_rgbd(color_pth, depth_pth, cam_scale=1):
