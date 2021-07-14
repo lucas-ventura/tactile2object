@@ -6,6 +6,7 @@ import os
 import open3d as o3d
 import copy
 import matplotlib.image as mpimg
+import re
 
 class XmlListConfig(list):
     # https://stackoverflow.com/a/5807028
@@ -80,10 +81,36 @@ def readXML(xml_pth):
 
 
 class Intrinsics:
-    def __init__(self, xml_dir):
+    def __init__(self, xml_dir, use_txt=True):
         self.xml_dir = xml_dir
 
-    def from_camera(self, camera="020122061233", W=640, H=480):
+        if use_txt:
+            self.camera_intrinsics = self.read_txt()
+        else:
+            self.camera_intrinsics = {}
+
+    def read_txt(self):
+        txt_pth = os.path.join(self.xml_dir, "intrinsics_640x480.txt")
+
+        with open(txt_pth, "r") as file_handle:
+            file_contents = file_handle.read()
+
+        camera_intrinsics = {}
+
+        for camera_info in file_contents.split("\n\n")[:-1]:
+            *_, camera, _, intrinsics = camera_info.split("\n")
+
+            p = re.search(r"p\[([0-9]*[.][0-9]*)\s([0-9]*[.][0-9]*)\]", intrinsics)
+            f = re.search(r"f\[([0-9]*[.][0-9]*)\s([0-9]*[.][0-9]*)\]", intrinsics)
+
+            cx, cy = p.group(1), p.group(2)
+            fx, fy = f.group(1), f.group(2)
+
+            camera_intrinsics[camera] = float(fx), float(fy), float(cx), float(cy)
+
+        return camera_intrinsics
+
+    def read_xml(self, camera="020122061233", W=640, H=480):
         intrinsic_pth = os.path.join(self.xml_dir, f"{camera}.xml")
         xmldict = readXML(intrinsic_pth)
         params = [float(param) for param in xmldict['camera']['camera_model']['params'][3:-3].split(";")]
@@ -102,7 +129,16 @@ class Intrinsics:
         cx_new = cx / dimx_old * dimx_new
         cy_new = cy / dimy_old * dimy_new
 
-        intrinsic = o3d.camera.PinholeCameraIntrinsic(W, H, fx_new, fy_new, cx_new, cy_new)
+        return fx_new, fy_new, cx_new, cy_new
+
+    def from_camera(self, camera="020122061233", W=640, H=480):
+        try:
+            fx, fy, cx, cy = self.camera_intrinsics[camera]
+        except:
+            fx, fy, cx, cy = self.read_xml(camera, W, H)
+            self.camera_intrinsics[camera] = fx, fy, cx, cy
+
+        intrinsic = o3d.camera.PinholeCameraIntrinsic(W, H, fx, fy, cx, cy)
 
         return intrinsic
 
