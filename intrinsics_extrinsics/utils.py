@@ -270,3 +270,23 @@ def manual_registration(source, target):
 
     return reg_p2p.transformation
 
+
+class Stitching_pcds:
+    def __init__(self, intrinsics, extrinsics, rgbds,
+                 cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
+        self.cameras = cameras
+        self.intrinsics = intrinsics
+        self.extrinsics = extrinsics
+        self.rgbds = rgbds
+
+    def __getitem__(self, idx):
+        pcd = o3d.geometry.PointCloud()
+
+        for camera in self.cameras:
+            rgbd = self.rgbds.from_camera(camera, idx=idx)
+            intrinsic = self.intrinsics.from_camera(camera)
+            extrinsic = self.extrinsics.from_camera(camera)
+            pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
+
+        return pcd
+
