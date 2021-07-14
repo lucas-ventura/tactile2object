@@ -237,6 +237,18 @@ def pick_points(pcd):
     print("")
     return vis.get_picked_points()
 
+def pick_points_location(pcd, picked_ids=None):
+    if picked_ids == None:
+        picked_ids = pick_points(pcd)
+
+    point_cloud = np.asarray(pcd.points)
+    touch_locations = []
+    for point_id in picked_ids:
+        point_in_world = point_cloud[point_id, :]
+        touch_locations.append([float(point_in_world[0]), float(point_in_world[1]), float(point_in_world[2])])
+
+    return np.array(touch_locations)
+
 
 def manual_registration(source, target):
     # ICP Registration open3D
