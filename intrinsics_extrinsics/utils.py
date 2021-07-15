@@ -7,6 +7,9 @@ import open3d as o3d
 import copy
 import matplotlib.image as mpimg
 import re
+import cv2
+import pupil_apriltags as apriltag
+from matplotlib import pyplot as plt
 
 class XmlListConfig(list):
     # https://stackoverflow.com/a/5807028
@@ -169,8 +172,7 @@ class Extrinsics:
 
         return np.linalg.inv(T_wc)
 
-
-def get_rgbd(color_pth, depth_pth, cam_scale=1):
+def get_rgbd(color_pth, depth_pth):
     depth = o3d.io.read_image(depth_pth)
     color = o3d.io.read_image(color_pth)
 
@@ -292,13 +294,109 @@ class Stitching_pcds:
         self.rgbds = rgbds
 
     def __getitem__(self, idx):
-        pcd = o3d.geometry.PointCloud()
+        stiched_pcd = o3d.geometry.PointCloud()
 
         for camera in self.cameras:
             rgbd = self.rgbds.from_camera(camera, idx=idx)
             intrinsic = self.intrinsics.from_camera(camera)
             extrinsic = self.extrinsics.from_camera(camera)
-            pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
+            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic, project_valid_depth_only=False)
+            stiched_pcd += pcd
 
-        return pcd
+        stiched_pcd.points = o3d.utility.Vector3dVector(np.nan_to_num(np.asarray(stiched_pcd.points)))
 
+        return stiched_pcd
+
+
+class WorldCoordinates:
+    """
+    Get 3D location from the stiched point cloud.
+    """
+    def __init__(self, stiched_pcd, cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
+        self.stiched_pcd = stiched_pcd
+        self.points_pcd = np.asarray(stiched_pcd.points)
+        self.cameras = cameras
+
+    def from_camera_pixel(self, camera, u, v):
+        """
+
+        Parameters
+        ----------
+        u, v: pixel position
+        camera: which camera are we using
+
+        Returns
+        -------
+        3D location from the point cloud.
+        """
+        idx = u * 640 + v + self.cameras.index(camera) * 307200
+        return self.points_pcd[idx]
+
+
+class AprilTag:
+    def __init__(self, img_pth, intrinsic_params):
+        fx, fy, cx, cy = intrinsic_params
+        self.image = cv2.imread(img_pth)
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+
+        detector = apriltag.Detector(families="tag36h11")
+        self.results = detector.detect(gray, estimate_tag_pose=True, camera_params=[fx, fy, cx, cy], tag_size=0.039)
+
+        # No results
+        if len(self.results) == 0:
+            self.center = None
+            self.corners = None
+        # One result
+        else:
+            self.center = [int(num) for num in self.results[0].center]
+
+            self.corners = []
+            for corner in self.results[0].corners:
+                corner = [int(num) for num in corner]
+                self.corners.append(corner)
+
+            self.corners = np.array(self.corners)
+
+    def get_image(self, radius=1, thickness=2, show=True):
+        image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        image = cv2.circle(image, center=self.center, radius=radius, color=[255, 0, 0], thickness=thickness)
+
+        cv2.line(image, self.corners[0], self.corners[1], (0, 255, 0), 2)
+        cv2.line(image, self.corners[1], self.corners[2], (0, 255, 0), 2)
+        cv2.line(image, self.corners[2], self.corners[3], (0, 255, 0), 2)
+        cv2.line(image, self.corners[3], self.corners[0], (0, 255, 0), 2)
+
+        for corner in self.corners:
+            image = cv2.circle(image, center=corner, radius=radius, color=[255, 0, 0], thickness=thickness)
+
+        plt.imshow(image)
+        plt.axis('off')
+
+        if show:
+            plt.show()
+        else:
+            plt.close()
+            return image
+
+
+class AprilTags:
+    """
+    Get corner pixel location from camera and index.
+    """
+    def __init__(self, intrinsics, xml_dir, recording="recording_wAprilTag/20210714_002709/"):
+        self.intrinsics = intrinsics
+        self.recording_dir = os.path.join(xml_dir, recording)
+
+    def corners(self, camera, idx):
+        img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
+        intrinsic_params = self.intrinsics.params_from_camera(camera)
+        single_apriltag = AprilTag(img_pth, intrinsic_params)
+
+        return single_apriltag.corners
+
+    def image(self, camera, idx, radius=1, thickness=2, show=True):
+        img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
+        intrinsic_params = self.intrinsics.params_from_camera(camera)
+        single_apriltag = AprilTag(img_pth, intrinsic_params)
+
+        return single_apriltag.get_image(radius=radius, thickness=thickness, show=show)
