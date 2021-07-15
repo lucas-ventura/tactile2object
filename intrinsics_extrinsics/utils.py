@@ -378,7 +378,7 @@ class AprilTag:
 
             for corner in self.corners:
                 image = cv2.circle(image, center=corner, radius=radius, color=[255, 0, 0], thickness=thickness)
-        else:
+        elif show:
             print("No AprilTag detected!")
 
         plt.imshow(image)
