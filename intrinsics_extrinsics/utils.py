@@ -183,16 +183,16 @@ def get_rgbd(color_pth, depth_pth):
 
 
 class RGBD:
-    def __init__(self, recordings_dir, recording="20210709_004128"):
-        self.recordings_dir = recordings_dir
+    def __init__(self, xml_dir, recording="recording_wAprilTag/20210714_002709/"):
+        self.xml_dir = xml_dir
         self.recording = recording
 
     def from_camera(self, camera="020122061233", idx="000000"):
         color_name = f"color_{idx}.jpg"
         depth_name = f"aligned_depth_to_color_{idx}.png"
 
-        color_pth = os.path.join(self.recordings_dir, self.recording, camera, color_name)
-        depth_pth = os.path.join(self.recordings_dir, self.recording, camera, depth_name)
+        color_pth = os.path.join(self.xml_dir, self.recording, camera, color_name)
+        depth_pth = os.path.join(self.xml_dir, self.recording, camera, depth_name)
 
         rgbd = get_rgbd(color_pth, depth_pth)
 
@@ -381,13 +381,11 @@ class AprilTag:
         elif show:
             print("No AprilTag detected!")
 
-        plt.imshow(image)
-        plt.axis('off')
-
         if show:
+            plt.imshow(image)
+            plt.axis('off')
             plt.show()
         else:
-            plt.close()
             return image
 
 
