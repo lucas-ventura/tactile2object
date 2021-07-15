@@ -344,12 +344,11 @@ class WorldCoordinates:
 
 
 class AprilTag:
-    def __init__(self, img_pth, intrinsic_params):
+    def __init__(self, img_pth, intrinsic_params, detector):
         fx, fy, cx, cy = intrinsic_params
         self.image = cv2.imread(img_pth)
         gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
-        detector = apriltag.Detector(families="tag36h11")
         self.results = detector.detect(gray, estimate_tag_pose=True, camera_params=[fx, fy, cx, cy], tag_size=0.039)
 
         # No results
@@ -371,13 +370,16 @@ class AprilTag:
         image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
         image = cv2.circle(image, center=self.center, radius=radius, color=[255, 0, 0], thickness=thickness)
 
-        cv2.line(image, self.corners[0], self.corners[1], (0, 255, 0), 2)
-        cv2.line(image, self.corners[1], self.corners[2], (0, 255, 0), 2)
-        cv2.line(image, self.corners[2], self.corners[3], (0, 255, 0), 2)
-        cv2.line(image, self.corners[3], self.corners[0], (0, 255, 0), 2)
+        if self.corners is not None:
+            cv2.line(image, self.corners[0], self.corners[1], (0, 255, 0), 2)
+            cv2.line(image, self.corners[1], self.corners[2], (0, 255, 0), 2)
+            cv2.line(image, self.corners[2], self.corners[3], (0, 255, 0), 2)
+            cv2.line(image, self.corners[3], self.corners[0], (0, 255, 0), 2)
 
-        for corner in self.corners:
-            image = cv2.circle(image, center=corner, radius=radius, color=[255, 0, 0], thickness=thickness)
+            for corner in self.corners:
+                image = cv2.circle(image, center=corner, radius=radius, color=[255, 0, 0], thickness=thickness)
+        else:
+            print("No AprilTag detected!")
 
         plt.imshow(image)
         plt.axis('off')
@@ -399,11 +401,12 @@ class AprilTags:
         self.intrinsics = intrinsics
         self.recording_dir = os.path.join(xml_dir, recording)
         self.cameras = cameras
+        self.detector = apriltag.Detector(families="tag36h11")
 
     def from_idx_camera(self, idx, camera):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
-        single_apriltag = AprilTag(img_pth, intrinsic_params)
+        single_apriltag = AprilTag(img_pth, intrinsic_params, self.detector)
 
         return single_apriltag
 
@@ -438,7 +441,7 @@ class AprilTags:
     def image(self, idx, camera, radius=1, thickness=2, show=True):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
-        single_apriltag = AprilTag(img_pth, intrinsic_params)
+        single_apriltag = AprilTag(img_pth, intrinsic_params, self.detector)
 
         return single_apriltag.get_image(radius=radius, thickness=thickness, show=show)
 
@@ -486,3 +489,17 @@ def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
     vis.update_renderer()
     vis.capture_screen_image(filename)
     vis.destroy_window()
+
+
+def get_balls_from_corners(corners_w):
+    corners_balls = []
+
+    for corner_w in corners_w:
+        corner_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=0.005)
+        corner_mesh.paint_uniform_color([0, 1.0, 0])
+        corner_mesh.translate(corner_w)
+
+        if not np.all((corner_w == 0)):
+            corners_balls.append(corner_mesh)
+
+    return corners_balls
