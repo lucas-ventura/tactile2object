@@ -329,8 +329,18 @@ class WorldCoordinates:
         -------
         3D location from the point cloud.
         """
-        idx = u * 640 + v + self.cameras.index(camera) * 307200
+        idx = v * 640 + u + self.cameras.index(camera) * 307200
         return self.points_pcd[idx]
+
+    def from_corners(self, corners, camera):
+        world_coordinates = np.zeros((corners.shape[0], 3))
+
+        for i, corner in enumerate(corners):
+            u, v = corner
+
+            world_coordinates[i, :] = self.from_camera_pixel(camera, u, v)
+
+        return world_coordinates
 
 
 class AprilTag:
@@ -383,18 +393,49 @@ class AprilTags:
     """
     Get corner pixel location from camera and index.
     """
-    def __init__(self, intrinsics, xml_dir, recording="recording_wAprilTag/20210714_002709/"):
+    def __init__(self, intrinsics, xml_dir,
+                 recording="recording_wAprilTag/20210714_002709/",
+                 cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
         self.intrinsics = intrinsics
         self.recording_dir = os.path.join(xml_dir, recording)
+        self.cameras = cameras
 
-    def corners(self, camera, idx):
+    def from_idx_camera(self, idx, camera):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
         single_apriltag = AprilTag(img_pth, intrinsic_params)
 
-        return single_apriltag.corners
+        return single_apriltag
 
-    def image(self, camera, idx, radius=1, thickness=2, show=True):
+    def corners(self, idx, camera=None):
+        """
+        Apriltag corners
+
+        Parameters
+        ----------
+        idx: Image index
+        camera: If camera is None fins corners in all cameras
+
+        Returns
+        -------
+        Pixels coordinates of apriltag corners.
+        """
+        # If camera is passed, return corners from camera
+        if camera is not None:
+            return self.from_idx_camera(idx, camera).corners, camera
+
+        # If camera is not passed, check all the cameras
+        for camera in self.cameras:
+            corners = self.from_idx_camera(idx, camera).corners
+
+            # Return pixel coordinates once it finds valid apriltag
+            if corners is not None:
+                return corners, camera
+
+        # Return None if it does not find the apriltag
+        return None, None
+
+    def image(self, idx, camera, radius=1, thickness=2, show=True):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
         single_apriltag = AprilTag(img_pth, intrinsic_params)
@@ -402,24 +443,46 @@ class AprilTags:
         return single_apriltag.get_image(radius=radius, thickness=thickness, show=show)
 
 
-def save_view_point(pcd, filename):
-    # https://github.com/intel-isl/Open3D/blob/2b8712ea8824f2010c4c5235d9ad8a7f7e40681d/examples/Python/Advanced/load_save_viewpoint.py
+def save_view_point(pcd, viewpoint_file="data/viewpoint.json"):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     vis.add_geometry(pcd)
     vis.run()  # user changes the view and press "q" to terminate
     param = vis.get_view_control().convert_to_pinhole_camera_parameters()
-    o3d.io.write_pinhole_camera_parameters(filename, param)
+    o3d.io.write_pinhole_camera_parameters(viewpoint_file, param)
     vis.destroy_window()
 
 
-def load_view_point(pcd, filename):
-    # https://github.com/intel-isl/Open3D/blob/2b8712ea8824f2010c4c5235d9ad8a7f7e40681d/examples/Python/Advanced/load_save_viewpoint.py
+def load_view_point(pcd, viewpoint_file="data/viewpoint.json"):
     vis = o3d.visualization.Visualizer()
     vis.create_window()
     ctr = vis.get_view_control()
-    param = o3d.io.read_pinhole_camera_parameters(filename)
-    vis.add_geometry(pcd)
+    param = o3d.io.read_pinhole_camera_parameters(viewpoint_file)
+    if isinstance(pcd, list):
+        for item in pcd:
+            vis.add_geometry(item)
+            ctr.convert_from_pinhole_camera_parameters(param)
+    else:
+        vis.add_geometry(pcd)
     ctr.convert_from_pinhole_camera_parameters(param)
     vis.run()
+    vis.destroy_window()
+
+
+def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
+    ctr = vis.get_view_control()
+    param = o3d.io.read_pinhole_camera_parameters(viewpoint_file)
+    if isinstance(pcd, list):
+        for item in pcd:
+            vis.add_geometry(item)
+            vis.update_geometry(item)
+    else:
+        vis.add_geometry(pcd)
+        vis.update_geometry(pcd)
+    ctr.convert_from_pinhole_camera_parameters(param)
+    vis.poll_events()
+    vis.update_renderer()
+    vis.capture_screen_image(filename)
     vis.destroy_window()
