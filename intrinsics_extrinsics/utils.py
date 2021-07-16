@@ -161,7 +161,7 @@ class Extrinsics:
         self.xml_dir = xml_dir
         self.default_camera = default_camera
 
-    def from_camera(self, camera="020122061233"):
+    def from_camera(self, camera="020122061233", inverse=True):
         if camera == self.default_camera:
             return np.array([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
@@ -172,7 +172,7 @@ class Extrinsics:
         T_wc = np.array(T_wc)
         T_wc = T_wc.astype(np.float64)
 
-        return np.linalg.inv(T_wc)
+        return np.linalg.inv(T_wc) if inverse else T_wc
 
 
 def get_rgbd(color_pth, depth_pth):
@@ -310,7 +310,7 @@ class Stitching_pcds:
 
 
 class AprilTag:
-    def __init__(self, img_pth, intrinsic_params, detector, tag_size=0.039):
+    def __init__(self, img_pth, detector, intrinsic_params, extrinsic_mat=np.eye(4), tag_size=0.039):
         fx, fy, cx, cy = intrinsic_params
         self.image = cv2.imread(img_pth)
         gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
@@ -337,8 +337,8 @@ class AprilTag:
             self.corners_p = np.array(self.corners_p)
 
             # Rotation and translation
-            R = self.results[0].pose_R
-            t = self.results[0].pose_t
+            self.R = self.results[0].pose_R
+            self.t = self.results[0].pose_t
 
             # Computing world AprilTag world positions
             tag_pos = np.array([[0, 0, 0],                          # Center tag
@@ -347,12 +347,18 @@ class AprilTag:
                                 [tag_size / 2, -tag_size / 2, 0],   # Third corner
                                 [-tag_size / 2, -tag_size / 2, 0]   # Fourth corner
                                 ])
-            tags_w = (R @ tag_pos.T + t).T
+            # Position with only intrinsic matrix
+            tags_w_i = (self.R @ tag_pos.T + self.t).T
+
+            # Compute extrinsic info
+            tags_w_1 = np.ones((5, 4))
+            tags_w_1[:, :3] = tags_w_i
+            tags_w_e = extrinsic_mat @ tags_w_1.T
 
             # Center of AprilTag in world coordinates
-            self.center_w = tags_w[0]
+            self.center_w = tags_w_e[:3, 0].T
             # Corners of AprilTag in world coordinates
-            self.corners_w = tags_w[1:]
+            self.corners_w = tags_w_e[:3, 1:].T
 
 
     def get_image(self, radius=1, thickness=2, show=True):
@@ -389,10 +395,11 @@ class AprilTags:
     """
     Get corner pixel location from camera and index.
     """
-    def __init__(self, intrinsics, xml_dir,
+    def __init__(self, xml_dir, intrinsics, extrinsics,
                  recording="recording_wAprilTag/20210714_002709/",
                  cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
         self.intrinsics = intrinsics
+        self.extrinsics = extrinsics
         self.recording_dir = os.path.join(xml_dir, recording)
         self.cameras = cameras
         self.detector = apriltag.Detector(families="tag36h11")
@@ -400,7 +407,8 @@ class AprilTags:
     def from_idx_camera(self, idx, camera):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
-        single_apriltag = AprilTag(img_pth, intrinsic_params, self.detector)
+        extrinsic_mat = self.extrinsics.from_camera(camera, inverse=False)
+        single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params, extrinsic_mat)
 
         return single_apriltag
 
@@ -435,7 +443,7 @@ class AprilTags:
     def image(self, idx, camera, radius=1, thickness=2, show=True):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
-        single_apriltag = AprilTag(img_pth, intrinsic_params, self.detector)
+        single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params)
 
         return single_apriltag.get_image(radius=radius, thickness=thickness, show=show)
 
