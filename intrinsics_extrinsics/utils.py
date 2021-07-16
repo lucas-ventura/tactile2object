@@ -294,15 +294,15 @@ class Stitching_pcds:
         self.rgbds = rgbds
 
     def __getitem__(self, idx):
-        stiched_pcd = o3d.geometry.PointCloud()
+        stitched_pcd = o3d.geometry.PointCloud()
 
         for camera in self.cameras:
             rgbd = self.rgbds.from_camera(camera, idx=idx)
             intrinsic = self.intrinsics.from_camera(camera)
             extrinsic = self.extrinsics.from_camera(camera)
-            stiched_pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
+            stitched_pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
 
-        return stiched_pcd
+        return stitched_pcd
 
 
 
