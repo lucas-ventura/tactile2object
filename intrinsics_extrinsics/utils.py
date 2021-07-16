@@ -11,6 +11,7 @@ import cv2
 import pupil_apriltags as apriltag
 from matplotlib import pyplot as plt
 
+
 class XmlListConfig(list):
     # https://stackoverflow.com/a/5807028
     def __init__(self, aList):
@@ -33,14 +34,14 @@ class XmlDictConfig(dict):
     '''
     Example usage:
 
-    >>> tree = ElementTree.parse('your_file.xml')
-    >>> root = tree.getroot()
-    >>> xmldict = XmlDictConfig(root)
+    tree = ElementTree.parse('your_file.xml')
+    root = tree.getroot()
+    xmldict = XmlDictConfig(root)
 
     Or, if you want to use an XML string:
 
-    >>> root = ElementTree.XML(xml_string)
-    >>> xmldict = XmlDictConfig(root)
+    root = ElementTree.XML(xml_string)
+    xmldict = XmlDictConfig(root)
 
     And then use xmldict for what it is... a dict.
     '''
@@ -76,7 +77,7 @@ class XmlDictConfig(dict):
                 self.update({element.tag: element.text})
 
 
-def readXML(xml_pth):
+def read_xml(xml_pth):
     tree = ElementTree.parse(xml_pth)
     root = tree.getroot()
 
@@ -115,7 +116,7 @@ class Intrinsics:
 
     def read_xml(self, camera="020122061233", W=640, H=480):
         intrinsic_pth = os.path.join(self.xml_dir, f"{camera}.xml")
-        xmldict = readXML(intrinsic_pth)
+        xmldict = read_xml(intrinsic_pth)
         params = [float(param) for param in xmldict['camera']['camera_model']['params'][3:-3].split(";")]
 
         fx_old, fy_old, cx, cy, *_ = params
@@ -154,6 +155,7 @@ class Intrinsics:
 
         return fx, fy, cx, cy
 
+
 class Extrinsics:
     def __init__(self, xml_dir, default_camera="020122061233"):
         self.xml_dir = xml_dir
@@ -164,13 +166,14 @@ class Extrinsics:
             return np.array([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
         extrinsic_pth = os.path.join(self.xml_dir, f"{self.default_camera}-{camera}.xml")
-        xmldict = readXML(extrinsic_pth)
+        xmldict = read_xml(extrinsic_pth)
         T_wc = [param.split(",") for param in xmldict['camera']['pose']['T_wc'][3:-3].split(";")]
         T_wc.append([0., 0., 0., 1.])
         T_wc = np.array(T_wc)
         T_wc = T_wc.astype(np.float64)
 
         return np.linalg.inv(T_wc)
+
 
 def get_rgbd(color_pth, depth_pth):
     depth = o3d.io.read_image(depth_pth)
@@ -239,8 +242,9 @@ def pick_points(pcd):
     print("")
     return vis.get_picked_points()
 
+
 def pick_points_location(pcd, picked_ids=None):
-    if picked_ids == None:
+    if picked_ids is None:
         picked_ids = pick_points(pcd)
 
     point_cloud = np.asarray(pcd.points)
@@ -303,7 +307,6 @@ class Stitching_pcds:
             stitched_pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
 
         return stitched_pcd
-
 
 
 class AprilTag:
