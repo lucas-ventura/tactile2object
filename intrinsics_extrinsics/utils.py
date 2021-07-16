@@ -319,8 +319,10 @@ class AprilTag:
 
         # No results
         if len(self.results) == 0:
-            self.center = None
-            self.corners = None
+            self.center_p = None
+            self.corners_p = None
+            self.center_w = None
+            self.corners_w = None
 
         # AprilTag found
         else:
@@ -402,7 +404,7 @@ class AprilTags:
 
         return single_apriltag
 
-    def corners_p(self, idx, camera=None):
+    def corners_w(self, idx, camera=None):
         """
         Apriltag corners
 
@@ -417,15 +419,15 @@ class AprilTags:
         """
         # If camera is passed, return corners from camera
         if camera is not None:
-            return self.from_idx_camera(idx, camera).corners_p, camera
+            return self.from_idx_camera(idx, camera).corners_w, camera
 
         # If camera is not passed, check all the cameras
         for camera in self.cameras:
-            corners_p = self.from_idx_camera(idx, camera).corners_p
+            corners_w = self.from_idx_camera(idx, camera).corners_w
 
             # Return pixel coordinates once it finds valid apriltag
-            if corners_p is not None:
-                return corners_p, camera
+            if corners_w is not None:
+                return corners_w, camera
 
         # Return None if it does not find the apriltag
         return None, None
@@ -466,7 +468,7 @@ def load_view_point(pcd, viewpoint_file="data/viewpoint.json"):
 
 def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
     vis = o3d.visualization.Visualizer()
-    vis.create_window()
+    vis.create_window(visible=False)
     ctr = vis.get_view_control()
     param = o3d.io.read_pinhole_camera_parameters(viewpoint_file)
     if isinstance(pcd, list):
