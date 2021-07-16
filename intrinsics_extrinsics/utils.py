@@ -300,47 +300,10 @@ class Stitching_pcds:
             rgbd = self.rgbds.from_camera(camera, idx=idx)
             intrinsic = self.intrinsics.from_camera(camera)
             extrinsic = self.extrinsics.from_camera(camera)
-            pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic, project_valid_depth_only=False)
-            stiched_pcd += pcd
-
-        stiched_pcd.points = o3d.utility.Vector3dVector(np.nan_to_num(np.asarray(stiched_pcd.points)))
+            stiched_pcd += o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic, extrinsic)
 
         return stiched_pcd
 
-
-class WorldCoordinates:
-    """
-    Get 3D location from the stiched point cloud.
-    """
-    def __init__(self, stiched_pcd, cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
-        self.stiched_pcd = stiched_pcd
-        self.points_pcd = np.asarray(stiched_pcd.points)
-        self.cameras = cameras
-
-    def from_camera_pixel(self, camera, u, v):
-        """
-
-        Parameters
-        ----------
-        u, v: pixel position
-        camera: which camera are we using
-
-        Returns
-        -------
-        3D location from the point cloud.
-        """
-        idx = v * 640 + u + self.cameras.index(camera) * 307200
-        return self.points_pcd[idx]
-
-    def from_corners(self, corners, camera):
-        world_coordinates = np.zeros((corners.shape[0], 3))
-
-        for i, corner in enumerate(corners):
-            u, v = corner
-
-            world_coordinates[i, :] = self.from_camera_pixel(camera, u, v)
-
-        return world_coordinates
 
 
 class AprilTag:
