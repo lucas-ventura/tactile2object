@@ -344,39 +344,60 @@ class WorldCoordinates:
 
 
 class AprilTag:
-    def __init__(self, img_pth, intrinsic_params, detector):
+    def __init__(self, img_pth, intrinsic_params, detector, tag_size=0.039):
         fx, fy, cx, cy = intrinsic_params
         self.image = cv2.imread(img_pth)
         gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
-        self.results = detector.detect(gray, estimate_tag_pose=True, camera_params=[fx, fy, cx, cy], tag_size=0.039)
+        self.results = detector.detect(gray, estimate_tag_pose=True, camera_params=[fx, fy, cx, cy], tag_size=tag_size)
 
         # No results
         if len(self.results) == 0:
             self.center = None
             self.corners = None
-        # One result
-        else:
-            self.center = [int(num) for num in self.results[0].center]
 
-            self.corners = []
+        # AprilTag found
+        else:
+            # Center of AprilTag in pixel coordinates
+            self.center_p = [int(num) for num in self.results[0].center]
+
+            # Corners of AprilTag in pixel coordinates
+            self.corners_p = []
             for corner in self.results[0].corners:
                 corner = [int(num) for num in corner]
-                self.corners.append(corner)
+                self.corners_p.append(corner)
+            self.corners_p = np.array(self.corners_p)
 
-            self.corners = np.array(self.corners)
+            # Rotation and translation
+            R = self.results[0].pose_R
+            t = self.results[0].pose_t
+
+            # Computing world AprilTag world positions
+            tag_pos = np.array([[0, 0, 0],                          # Center tag
+                                [-tag_size / 2, tag_size / 2, 0],   # First corner
+                                [tag_size / 2, tag_size / 2, 0],    # Second corner
+                                [tag_size / 2, -tag_size / 2, 0],   # Third corner
+                                [-tag_size / 2, -tag_size / 2, 0]   # Fourth corner
+                                ])
+            tags_w = (R @ tag_pos.T + t).T
+
+            # Center of AprilTag in world coordinates
+            self.center_w = tags_w[0]
+            # Corners of AprilTag in world coordinates
+            self.corners_w = tags_w[1:]
+
 
     def get_image(self, radius=1, thickness=2, show=True):
         image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-        image = cv2.circle(image, center=self.center, radius=radius, color=[255, 0, 0], thickness=thickness)
+        image = cv2.circle(image, center=self.center_p, radius=radius, color=[255, 0, 0], thickness=thickness)
 
-        if self.corners is not None:
-            cv2.line(image, self.corners[0], self.corners[1], (0, 255, 0), 2)
-            cv2.line(image, self.corners[1], self.corners[2], (0, 255, 0), 2)
-            cv2.line(image, self.corners[2], self.corners[3], (0, 255, 0), 2)
-            cv2.line(image, self.corners[3], self.corners[0], (0, 255, 0), 2)
+        if self.corners_p is not None:
+            cv2.line(image, self.corners_p[0], self.corners_p[1], (0, 255, 0), 2)
+            cv2.line(image, self.corners_p[1], self.corners_p[2], (0, 255, 0), 2)
+            cv2.line(image, self.corners_p[2], self.corners_p[3], (0, 255, 0), 2)
+            cv2.line(image, self.corners_p[3], self.corners_p[0], (0, 255, 0), 2)
 
-            for corner in self.corners:
+            for corner in self.corners_p:
                 image = cv2.circle(image, center=corner, radius=radius, color=[255, 0, 0], thickness=thickness)
         elif show:
             print("No AprilTag detected!")
@@ -392,7 +413,7 @@ class AprilTag:
         center = self.results[0].center
         corners = self.results[0].corners
         pose_R = self.results[0].pose_R
-        pose_t  = self.results[0].pose_t
+        pose_t = self.results[0].pose_t
         return f"AprilTag with \ncenter: {center}\ncorners: {corners}\npose_R: {pose_R}\npose_t: {pose_t}"
 
 
@@ -415,7 +436,7 @@ class AprilTags:
 
         return single_apriltag
 
-    def corners(self, idx, camera=None):
+    def corners_p(self, idx, camera=None):
         """
         Apriltag corners
 
@@ -430,15 +451,15 @@ class AprilTags:
         """
         # If camera is passed, return corners from camera
         if camera is not None:
-            return self.from_idx_camera(idx, camera).corners, camera
+            return self.from_idx_camera(idx, camera).corners_p, camera
 
         # If camera is not passed, check all the cameras
         for camera in self.cameras:
-            corners = self.from_idx_camera(idx, camera).corners
+            corners_p = self.from_idx_camera(idx, camera).corners_p
 
             # Return pixel coordinates once it finds valid apriltag
-            if corners is not None:
-                return corners, camera
+            if corners_p is not None:
+                return corners_p, camera
 
         # Return None if it does not find the apriltag
         return None, None
