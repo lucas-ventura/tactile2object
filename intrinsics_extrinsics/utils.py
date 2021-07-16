@@ -388,6 +388,13 @@ class AprilTag:
         else:
             return image
 
+    def __repr__(self):
+        center = self.results[0].center
+        corners = self.results[0].corners
+        pose_R = self.results[0].pose_R
+        pose_t  = self.results[0].pose_t
+        return f"AprilTag with \ncenter: {center}\ncorners: {corners}\npose_R: {pose_R}\npose_t: {pose_t}"
+
 
 class AprilTags:
     """
