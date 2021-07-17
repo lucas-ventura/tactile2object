@@ -351,26 +351,28 @@ class AprilTag:
                                 [-tag_size / 2, tag_size / 2, 0],    # First corner AprilTag
                                 [tag_size / 2, tag_size / 2, 0],     # Second corner AprilTag
                                 [tag_size / 2, -tag_size / 2, 0],    # Third corner AprilTag
-                                [-tag_size / 2, -tag_size / 2, 0],   # Fourth corner AprilTag
-                                [-tag_size / 2, tag_size / 2, 0.2],  # First corner AprilTag projected to the hand
-                                [tag_size / 2, tag_size / 2, 0.2],   # Second corner AprilTag projected to the hand
-                                [tag_size / 2, -tag_size / 2, 0.2],  # Third corner AprilTag projected to the hand
-                                [-tag_size / 2, -tag_size / 2, 0.2]  # Fourth corner AprilTag projected to the hand
+                                [-tag_size / 2, -tag_size / 2, 0]    # Fourth corner AprilTag
                                 ])
             # Position with only intrinsic matrix
             tags_w_i = (self.R @ tag_pos.T + self.t).T
 
             # Compute extrinsic info
-            tags_w_1 = np.ones((9, 4))
+            tags_w_1 = np.ones((5, 4))
             tags_w_1[:, :3] = tags_w_i
             tags_w_e = extrinsic_mat @ tags_w_1.T
 
             # Center of AprilTag in world coordinates
             self.center_w = tags_w_e[:3, 0].T
-            # Corners of AprilTag in world coordinates
-            self.corners_w = tags_w_e[:3, 1:5].T
+            # Corners of AprilTag tag in world coordinates
+            self.corners_w_t = tags_w_e[:3, 1:5].T
+
+            # Normal of the AprilTag plane
+            n = np.cross(self.corners_w_t[3] - self.corners_w_t[0], self.corners_w_t[1] - self.corners_w_t[0])
+            n = n / np.sqrt(np.sum(n ** 2))
             # Corners of AprilTag in world coordinates projected to the hand
-            self.corners_w_h = tags_w_e[:3, 5:9].T
+            self.corners_w_h = self.corners_w_t + n*0.02
+            # All AprilTag corners (corners_w_t + corners_w_h)
+            self.corners_w = np.concatenate((self.corners_w_t, self.corners_w_h))
 
     def get_image(self, radius=1, thickness=2, show=True):
         image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
@@ -516,6 +518,18 @@ def get_balls_from_corners(corners_w, color=[0, 1, 0]):
             corners_balls.append(corner_mesh)
 
     return corners_balls
+
+
+def get_apriltag_rectangle(R, t, tag_size=0.039, depth=0.02, color=[0.706, 0.0, 0]):
+    box = o3d.geometry.TriangleMesh.create_box(width=tag_size, height=tag_size, depth=depth)
+    box.translate((-tag_size / 2, -tag_size / 2, 0))
+
+    box.rotate(R, center=(0, 0, 0))
+    box.translate(t)
+
+    box.paint_uniform_color(color)
+
+    return box
 
 
 def rigid_transform_3D(A, B):
