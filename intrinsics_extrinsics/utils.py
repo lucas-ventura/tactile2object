@@ -424,6 +424,7 @@ class AprilTags:
         ----------
         idx: Image index
         camera: If camera is None fins corners in all cameras
+        pose_err_thld: Pose error threshold from AprilTag detection
 
         Returns
         -------
