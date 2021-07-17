@@ -430,15 +430,16 @@ class AprilTags:
             return self.from_idx_camera(idx, camera).corners_w
 
         # If camera is not passed, check all the cameras
+        all_corners_w = []
         for camera in self.cameras:
             corners_w = self.from_idx_camera(idx, camera).corners_w
 
-            # Return pixel coordinates once it finds valid apriltag
+            # AprilTag found for that particular index and camera
             if corners_w is not None:
-                return corners_w
+                all_corners_w.append(corners_w)
 
-        # Return None if it does not find the apriltag
-        return None
+        # Return None if it does not find the AprilTag. If it finds one or more, do average
+        return None if len(all_corners_w) == 0 else np.mean(all_corners_w, axis=0)
 
     def image(self, idx, camera, radius=1, thickness=2, show=True):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
