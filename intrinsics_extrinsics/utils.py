@@ -319,6 +319,7 @@ class AprilTag:
 
         # No results
         if len(self.results) == 0:
+            self.pose_err = None
             self.center_p = None
             self.corners_p = None
             self.center_w = None
@@ -326,6 +327,9 @@ class AprilTag:
 
         # AprilTag found
         else:
+            # Pose error of the AprilTag found
+            self.pose_err = self.results[0].pose_err
+
             # Center of AprilTag in pixel coordinates
             self.center_p = [int(num) for num in self.results[0].center]
 
@@ -412,7 +416,7 @@ class AprilTags:
 
         return single_apriltag
 
-    def corners_w(self, idx, camera=None):
+    def corners_w(self, idx, camera=None, pose_err_thld=1*10**-6):
         """
         Apriltag corners
 
@@ -432,10 +436,12 @@ class AprilTags:
         # If camera is not passed, check all the cameras
         all_corners_w = []
         for camera in self.cameras:
-            corners_w = self.from_idx_camera(idx, camera).corners_w
+            apriltag_camera = self.from_idx_camera(idx, camera)
+            corners_w = apriltag_camera.corners_w
+            pose_err = apriltag_camera.pose_err
 
-            # AprilTag found for that particular index and camera
-            if corners_w is not None:
+            # AprilTag found and pose error is less than pose error threshold
+            if corners_w is not None and pose_err < pose_err_thld:
                 all_corners_w.append(corners_w)
 
         # Return None if it does not find the AprilTag. If it finds one or more, do average
