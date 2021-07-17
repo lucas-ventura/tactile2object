@@ -520,7 +520,7 @@ def get_balls_from_corners(corners_w, color=[0, 1, 0]):
     return corners_balls
 
 
-def get_rectangle_from_corners(corners_w, color=[1, 0, 0]):
+def get_rectangle_from_corners(corners_w, color=[0.7, 0, 0]):
     triangles = np.array(([4, 6, 5],
                           [4, 7, 6],
                           [0, 3, 4],
@@ -537,6 +537,7 @@ def get_rectangle_from_corners(corners_w, color=[1, 0, 0]):
     rectangle = o3d.geometry.TriangleMesh()
     rectangle.vertices = o3d.utility.Vector3dVector(corners_w)
     rectangle.triangles = o3d.utility.Vector3iVector(triangles)
+    rectangle.compute_vertex_normals()
     rectangle.paint_uniform_color(color)
 
     return rectangle
