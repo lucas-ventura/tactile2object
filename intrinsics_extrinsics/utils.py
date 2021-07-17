@@ -427,7 +427,7 @@ class AprilTags:
         """
         # If camera is passed, return corners from camera
         if camera is not None:
-            return self.from_idx_camera(idx, camera).corners_w, camera
+            return self.from_idx_camera(idx, camera).corners_w
 
         # If camera is not passed, check all the cameras
         for camera in self.cameras:
@@ -435,10 +435,10 @@ class AprilTags:
 
             # Return pixel coordinates once it finds valid apriltag
             if corners_w is not None:
-                return corners_w, camera
+                return corners_w
 
         # Return None if it does not find the apriltag
-        return None, None
+        return None
 
     def image(self, idx, camera, radius=1, thickness=2, show=True):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
