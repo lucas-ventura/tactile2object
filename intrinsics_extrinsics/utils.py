@@ -324,6 +324,8 @@ class AprilTag:
             self.corners_p = None
             self.center_w = None
             self.corners_w = None
+            self.R = None
+            self.t = None
 
         # AprilTag found
         else:
@@ -345,25 +347,30 @@ class AprilTag:
             self.t = self.results[0].pose_t
 
             # Computing world AprilTag world positions
-            tag_pos = np.array([[0, 0, 0],                          # Center tag
-                                [-tag_size / 2, tag_size / 2, 0],   # First corner
-                                [tag_size / 2, tag_size / 2, 0],    # Second corner
-                                [tag_size / 2, -tag_size / 2, 0],   # Third corner
-                                [-tag_size / 2, -tag_size / 2, 0]   # Fourth corner
+            tag_pos = np.array([[0, 0, 0],                           # Center AprilTag
+                                [-tag_size / 2, tag_size / 2, 0],    # First corner AprilTag
+                                [tag_size / 2, tag_size / 2, 0],     # Second corner AprilTag
+                                [tag_size / 2, -tag_size / 2, 0],    # Third corner AprilTag
+                                [-tag_size / 2, -tag_size / 2, 0],   # Fourth corner AprilTag
+                                [-tag_size / 2, tag_size / 2, 0.2],  # First corner AprilTag projected to the hand
+                                [tag_size / 2, tag_size / 2, 0.2],   # Second corner AprilTag projected to the hand
+                                [tag_size / 2, -tag_size / 2, 0.2],  # Third corner AprilTag projected to the hand
+                                [-tag_size / 2, -tag_size / 2, 0.2]  # Fourth corner AprilTag projected to the hand
                                 ])
             # Position with only intrinsic matrix
             tags_w_i = (self.R @ tag_pos.T + self.t).T
 
             # Compute extrinsic info
-            tags_w_1 = np.ones((5, 4))
+            tags_w_1 = np.ones((9, 4))
             tags_w_1[:, :3] = tags_w_i
             tags_w_e = extrinsic_mat @ tags_w_1.T
 
             # Center of AprilTag in world coordinates
             self.center_w = tags_w_e[:3, 0].T
             # Corners of AprilTag in world coordinates
-            self.corners_w = tags_w_e[:3, 1:].T
-
+            self.corners_w = tags_w_e[:3, 1:5].T
+            # Corners of AprilTag in world coordinates projected to the hand
+            self.corners_w_h = tags_w_e[:3, 5:9].T
 
     def get_image(self, radius=1, thickness=2, show=True):
         image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
@@ -388,11 +395,7 @@ class AprilTag:
             return image
 
     def __repr__(self):
-        center = self.results[0].center
-        corners = self.results[0].corners
-        pose_R = self.results[0].pose_R
-        pose_t = self.results[0].pose_t
-        return f"AprilTag with \ncenter: {center}\ncorners: {corners}\npose_R: {pose_R}\npose_t: {pose_t}"
+        return f"AprilTag with \ncenter: {self.center_w}\ncorners: {self.corners_w}\npose_R: {self.R}\npose_t: {self.t}"
 
 
 class AprilTags:
@@ -501,12 +504,12 @@ def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
     vis.destroy_window()
 
 
-def get_balls_from_corners(corners_w):
+def get_balls_from_corners(corners_w, color=[0, 1, 0]):
     corners_balls = []
 
     for corner_w in corners_w:
         corner_mesh = o3d.geometry.TriangleMesh.create_sphere(radius=0.005)
-        corner_mesh.paint_uniform_color([0, 1.0, 0])
+        corner_mesh.paint_uniform_color(color)
         corner_mesh.translate(corner_w)
 
         if not np.all((corner_w == 0)):
