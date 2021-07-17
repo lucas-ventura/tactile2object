@@ -520,18 +520,6 @@ def get_balls_from_corners(corners_w, color=[0, 1, 0]):
     return corners_balls
 
 
-def get_apriltag_rectangle(R, t, tag_size=0.039, depth=0.02, color=[0.706, 0.0, 0]):
-    box = o3d.geometry.TriangleMesh.create_box(width=tag_size, height=tag_size, depth=depth)
-    box.translate((-tag_size / 2, -tag_size / 2, 0))
-
-    box.rotate(R, center=(0, 0, 0))
-    box.translate(t)
-
-    box.paint_uniform_color(color)
-
-    return box
-
-
 def rigid_transform_3D(A, B):
     # Code from https://github.com/nghiaho12/rigid_transform_3D/blob/master/rigid_transform_3D.py
     assert A.shape == B.shape
