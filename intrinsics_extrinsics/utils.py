@@ -257,6 +257,22 @@ def pick_points_location(pcd, picked_ids=None):
 
 
 def manual_registration(source, target):
+    """
+    Returns transformation between two point clouds.
+    1. Plots the two point clouds
+    2. Pick points from two point clouds and builds correspondences
+    3. Estimate rough transformation using correspondences
+    4. point-to-point ICP for refinement
+
+    Parameters
+    ----------
+        source (o3d PointCloud): Source point cloud
+        target (o3d PointCloud): Target point cloud
+
+    Returns
+    -------
+        transformation (
+    """
     # ICP Registration open3D
     print("Manual ICP")
     print("Visualization of two point clouds before manual alignment")
@@ -287,6 +303,41 @@ def manual_registration(source, target):
     print("")
 
     return reg_p2p.transformation
+
+
+def find_object_transformation(pcd, obj_pth, return_obj_mesh=True, color=[1, 0.706, 0]):
+    """
+    Function to estimate object transformation with initial transformation with correspondences and then ICP.
+
+    Parameters
+    ----------
+        pcd (o3d PointCloud): Point cloud with the target object.
+        obj_pth (str): Path to the object file (ply)
+        return_obj_mesh (boolean): If we want to return the transformed mesh
+        color (list): Color of the returned mesh
+
+    Returns
+    -------
+        Transformation (4x4 np.array): Transformation from the loaded object to the target point cloud.
+        obj_mesh_t (o3d TriangleMesh): Object mesh with the transformation.
+
+    """
+    obj_pcd = o3d.io.read_point_cloud(obj_pth)
+    obj_mesh = o3d.io.read_triangle_mesh(obj_pth)
+
+    obj_pcd.scale(0.001, center=(0, 0, 0))
+    obj_mesh.scale(0.001, center=(0, 0, 0))
+
+    transformation = manual_registration(obj_pcd, pcd)
+
+    if not return_obj_mesh:
+        return transformation
+    else:
+        obj_mesh_t = copy.deepcopy(obj_mesh).transform(transformation)
+        obj_mesh_t.compute_vertex_normals()
+        obj_mesh_t.paint_uniform_color(color)
+
+        return transformation, obj_mesh_t
 
 
 class Stitching_pcds:
