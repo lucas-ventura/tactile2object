@@ -290,6 +290,9 @@ def manual_registration(source, target):
 
 
 class Stitching_pcds:
+    """
+    Stitches the point clouds from all the cameras with the intrinsic and extrinsic parameters.
+    """
     def __init__(self, intrinsics, extrinsics, rgbds,
                  cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
         self.cameras = cameras
@@ -298,6 +301,7 @@ class Stitching_pcds:
         self.rgbds = rgbds
 
     def __getitem__(self, idx):
+        """ Returns the stitched point cloud given an index."""
         stitched_pcd = o3d.geometry.PointCloud()
 
         for camera in self.cameras:
