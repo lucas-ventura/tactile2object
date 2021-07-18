@@ -507,6 +507,18 @@ def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
 
 
 def get_balls_from_corners(corners_w, color=[0, 1, 0]):
+    """
+    Get o3d balls at the corner locations.
+
+    Parameters
+    ----------
+        corners_w (nx3 np.array): Location of the balls
+        color (3x1 list): Balls color
+
+    Returns
+    -------
+        corners_balls (list of o3d TriangleMesh): Balls at the specified locations
+    """
     corners_balls = []
 
     for corner_w in corners_w:
@@ -521,6 +533,20 @@ def get_balls_from_corners(corners_w, color=[0, 1, 0]):
 
 
 def get_rectangle_from_corners(corners_w, color=[0.7, 0, 0]):
+    """
+    Get o3d rectangle from 8 corners of the AprilTag.
+
+    Parameters
+    ----------
+        corners_w (8x3 np.array): Corners of the AprilTag.
+        color (3x1 list): Color of the rectangle
+
+    Returns
+    -------
+        rectangle (o3d TriangleMesh): Rectangle mesh
+    """
+    assert corners_w.shape == (8, 3)
+
     triangles = np.array(([4, 6, 5],
                           [4, 7, 6],
                           [0, 3, 4],
@@ -543,8 +569,22 @@ def get_rectangle_from_corners(corners_w, color=[0.7, 0, 0]):
     return rectangle
 
 
-def rigid_transform_3D(A, B):
-    # Code from https://github.com/nghiaho12/rigid_transform_3D/blob/master/rigid_transform_3D.py
+def rigid_transform_3D(A, B, transform_source=False):
+    """
+    Finds the rigit transformation between two point clouds
+
+    Code adapted from https://github.com/nghiaho12/rigid_transform_3D/blob/master/rigid_transform_3D.py
+
+    Parameters
+    ----------
+        A (np.array): Source point cloud
+        B (np.array): Target point cloud
+
+    Returns
+    -------
+        R (np.array): Rotation (3x3)
+        t (np.array): translation (3x1)
+    """
     assert A.shape == B.shape
 
     num_rows, num_cols = A.shape
@@ -579,9 +619,13 @@ def rigid_transform_3D(A, B):
 
     # special reflection case
     if np.linalg.det(R) < 0:
-        Vt[2,:] *= -1
+        Vt[2, :] *= -1
         R = Vt.T @ U.T
 
     t = -R @ centroid_A + centroid_B
 
-    return R, t
+    if transform_source:
+        A_rt = np.matmul(A.T, R.T) + t.T
+        return R, t, A_rt
+    else:
+        return R, t
