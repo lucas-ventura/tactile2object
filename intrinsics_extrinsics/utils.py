@@ -85,8 +85,8 @@ def read_xml(xml_pth):
 
 
 class Intrinsics:
-    def __init__(self, xml_dir, use_txt=True):
-        self.xml_dir = xml_dir
+    def __init__(self, recording_dir, use_txt=True):
+        self.recording_dir = recording_dir
 
         if use_txt:
             self.camera_intrinsics = self.read_txt()
@@ -94,7 +94,7 @@ class Intrinsics:
             self.camera_intrinsics = {}
 
     def read_txt(self):
-        txt_pth = os.path.join(self.xml_dir, "intrinsics_640x480.txt")
+        txt_pth = os.path.join(self.recording_dir, "intrinsics_640x480.txt")
 
         with open(txt_pth, "r") as file_handle:
             file_contents = file_handle.read()
@@ -115,7 +115,7 @@ class Intrinsics:
         return camera_intrinsics
 
     def read_xml(self, camera="020122061233", W=640, H=480):
-        intrinsic_pth = os.path.join(self.xml_dir, f"{camera}.xml")
+        intrinsic_pth = os.path.join(self.recording_dir, f"{camera}.xml")
         xmldict = read_xml(intrinsic_pth)
         params = [float(param) for param in xmldict['camera']['camera_model']['params'][3:-3].split(";")]
 
@@ -157,15 +157,15 @@ class Intrinsics:
 
 
 class Extrinsics:
-    def __init__(self, xml_dir, default_camera="020122061233"):
-        self.xml_dir = xml_dir
+    def __init__(self, recording_dir, default_camera="020122061233"):
+        self.recording_dir = recording_dir
         self.default_camera = default_camera
 
     def from_camera(self, camera="020122061233", inverse=True):
         if camera == self.default_camera:
             return np.array([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
-        extrinsic_pth = os.path.join(self.xml_dir, f"{self.default_camera}-{camera}.xml")
+        extrinsic_pth = os.path.join(self.recording_dir, f"{self.default_camera}-{camera}.xml")
         xmldict = read_xml(extrinsic_pth)
         T_wc = [param.split(",") for param in xmldict['camera']['pose']['T_wc'][3:-3].split(";")]
         T_wc.append([0., 0., 0., 1.])
@@ -186,16 +186,16 @@ def get_rgbd(color_pth, depth_pth):
 
 
 class RGBD:
-    def __init__(self, xml_dir, recording="recording_wAprilTag/20210714_002709/"):
-        self.xml_dir = xml_dir
+    def __init__(self, recording_dir, recording="20210714_002709/"):
+        self.recording_dir = recording_dir
         self.recording = recording
 
     def from_camera(self, camera="020122061233", idx="000000"):
         color_name = f"color_{idx}.jpg"
         depth_name = f"aligned_depth_to_color_{idx}.png"
 
-        color_pth = os.path.join(self.xml_dir, self.recording, camera, color_name)
-        depth_pth = os.path.join(self.xml_dir, self.recording, camera, depth_name)
+        color_pth = os.path.join(self.recording_dir, self.recording, camera, color_name)
+        depth_pth = os.path.join(self.recording_dir, self.recording, camera, depth_name)
 
         rgbd = get_rgbd(color_pth, depth_pth)
 
@@ -459,12 +459,12 @@ class AprilTags:
     """
     Get corner pixel location from camera and index.
     """
-    def __init__(self, xml_dir, intrinsics, extrinsics,
+    def __init__(self, recording_dir, intrinsics, extrinsics,
                  recording="recording_wAprilTag/20210714_002709/",
                  cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
         self.intrinsics = intrinsics
         self.extrinsics = extrinsics
-        self.recording_dir = os.path.join(xml_dir, recording)
+        self.recording_dir = os.path.join(recording_dir, recording)
         self.cameras = cameras
         self.detector = apriltag.Detector(families="tag36h11")
 
