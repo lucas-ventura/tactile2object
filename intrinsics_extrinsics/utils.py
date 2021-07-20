@@ -365,7 +365,7 @@ class Stitching_pcds:
 
 
 class AprilTag:
-    def __init__(self, img_pth, detector, intrinsic_params, extrinsic_mat=np.eye(4), tag_size=0.039):
+    def __init__(self, img_pth, detector, intrinsic_params, extrinsic_mat=np.eye(4), tag_size=0.0585):
         fx, fy, cx, cy = intrinsic_params
         self.image = cv2.imread(img_pth)
         gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
@@ -461,18 +461,20 @@ class AprilTags:
     """
     def __init__(self, recording_dir, intrinsics, extrinsics,
                  recording="recording_wAprilTag/20210714_002709/",
-                 cameras=["020122061233", "821312060044", "020122061651", "821312062243"]):
+                 cameras=["020122061233", "821312060044", "020122061651", "821312062243"],
+                 tag_size=0.0585):
         self.intrinsics = intrinsics
         self.extrinsics = extrinsics
         self.recording_dir = os.path.join(recording_dir, recording)
         self.cameras = cameras
         self.detector = apriltag.Detector(families="tag36h11")
+        self.tag_size = tag_size
 
     def from_idx_camera(self, idx, camera):
         img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
         extrinsic_mat = self.extrinsics.from_camera(camera, inverse=False)
-        single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params, extrinsic_mat)
+        single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params, extrinsic_mat, tag_size=self.tag_size)
 
         return single_apriltag
 
