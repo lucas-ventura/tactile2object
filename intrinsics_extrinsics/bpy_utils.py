@@ -1,5 +1,6 @@
 import bpy
 import math
+import numpy as np
 
 
 def load_fbx(fbx_pth):
@@ -42,3 +43,29 @@ def get_keyframes():
                 keyframes.append((math.ceil(x)))
 
     return keyframes
+
+
+class Keypoints:
+    def __init__(self, hand="l"):
+        self.armature = bpy.context.scene.objects['Dongle_1B5E4344']
+        self.fingers = ["thumb_01_l", "thumb_02_l", "thumb_03_l", "thumb_tip_l",
+                        "index_01_l", "index_02_l", "index_03_l", "index_tip_l",
+                        "middle_01_l", "middle_02_l", "middle_03_l", "middle_tip_l",
+                        "ring_01_l", "ring_02_l", "ring_03_l", "ring_tip_l",
+                        "pinky_01_l", "pinky_02_l", "pinky_03_l", "pinky_tip_l"]
+
+        if hand == "r":
+            self.fingers = [finger.replace("_l", "_r") for finger in self.fingers]
+
+    def from_frame(self, frame):
+        bpy.context.scene.frame_set(frame)
+
+        all_fingers = []
+
+        for finger in self.fingers:
+            bone = self.armature.pose.bones[finger].head
+            bonePos = self.armature.matrix_world @ bone
+
+            all_fingers.append(np.array(bonePos))
+
+        return np.vstack(all_fingers)
