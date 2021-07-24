@@ -85,8 +85,8 @@ def read_xml(xml_pth):
 
 
 class Intrinsics:
-    def __init__(self, recording_dir, use_txt=True):
-        self.recording_dir = recording_dir
+    def __init__(self, cameras_dir, use_txt=True):
+        self.cameras_dir = cameras_dir
 
         if use_txt:
             self.camera_intrinsics = self.read_txt()
@@ -94,7 +94,7 @@ class Intrinsics:
             self.camera_intrinsics = {}
 
     def read_txt(self):
-        txt_pth = os.path.join(self.recording_dir, "intrinsics_640x480.txt")
+        txt_pth = os.path.join(self.cameras_dir, "intrinsics_640x480.txt")
 
         with open(txt_pth, "r") as file_handle:
             file_contents = file_handle.read()
@@ -115,7 +115,7 @@ class Intrinsics:
         return camera_intrinsics
 
     def read_xml(self, camera="020122061233", W=640, H=480):
-        intrinsic_pth = os.path.join(self.recording_dir, f"{camera}.xml")
+        intrinsic_pth = os.path.join(self.cameras_dir, f"{camera}.xml")
         xmldict = read_xml(intrinsic_pth)
         params = [float(param) for param in xmldict['camera']['camera_model']['params'][3:-3].split(";")]
 
@@ -157,15 +157,15 @@ class Intrinsics:
 
 
 class Extrinsics:
-    def __init__(self, recording_dir, default_camera="020122061233"):
-        self.recording_dir = recording_dir
+    def __init__(self, cameras_dir, default_camera="020122061233"):
+        self.cameras_dir = cameras_dir
         self.default_camera = default_camera
 
     def from_camera(self, camera="020122061233", inverse=True):
         if camera == self.default_camera:
             return np.array([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
-        extrinsic_pth = os.path.join(self.recording_dir, f"{self.default_camera}-{camera}.xml")
+        extrinsic_pth = os.path.join(self.cameras_dir, f"{self.default_camera}-{camera}.xml")
         xmldict = read_xml(extrinsic_pth)
         T_wc = [param.split(",") for param in xmldict['camera']['pose']['T_wc'][3:-3].split(";")]
         T_wc.append([0., 0., 0., 1.])
@@ -186,16 +186,15 @@ def get_rgbd(color_pth, depth_pth):
 
 
 class RGBD:
-    def __init__(self, recording_dir, recording="20210714_002709/"):
-        self.recording_dir = recording_dir
-        self.recording = recording
+    def __init__(self, cameras_dir):
+        self.cameras_dir = cameras_dir
 
     def from_camera(self, camera="020122061233", idx="000000"):
         color_name = f"color_{idx}.jpg"
         depth_name = f"aligned_depth_to_color_{idx}.png"
 
-        color_pth = os.path.join(self.recording_dir, self.recording, camera, color_name)
-        depth_pth = os.path.join(self.recording_dir, self.recording, camera, depth_name)
+        color_pth = os.path.join(self.cameras_dir, camera, color_name)
+        depth_pth = os.path.join(self.cameras_dir, camera, depth_name)
 
         rgbd = get_rgbd(color_pth, depth_pth)
 
@@ -459,19 +458,18 @@ class AprilTags:
     """
     Get corner pixel location from camera and index.
     """
-    def __init__(self, recording_dir, intrinsics, extrinsics,
-                 recording="recording_wAprilTag/20210714_002709/",
+    def __init__(self, cameras_dir, intrinsics, extrinsics,
                  cameras=["020122061233", "821312060044", "020122061651", "821312062243"],
                  tag_size=0.0585):
         self.intrinsics = intrinsics
         self.extrinsics = extrinsics
-        self.recording_dir = os.path.join(recording_dir, recording)
+        self.cameras_dir = cameras_dir
         self.cameras = cameras
         self.detector = apriltag.Detector(families="tag36h11")
         self.tag_size = tag_size
 
     def from_idx_camera(self, idx, camera):
-        img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
+        img_pth = os.path.join(self.cameras_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
         extrinsic_mat = self.extrinsics.from_camera(camera, inverse=False)
         single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params, extrinsic_mat, tag_size=self.tag_size)
@@ -511,7 +509,7 @@ class AprilTags:
         return None if len(all_corners_w) == 0 else np.mean(all_corners_w, axis=0)
 
     def image(self, idx, camera, radius=1, thickness=2, show=True):
-        img_pth = os.path.join(self.recording_dir, camera, f"color_{idx}.jpg")
+        img_pth = os.path.join(self.cameras_dir, camera, f"color_{idx}.jpg")
         intrinsic_params = self.intrinsics.params_from_camera(camera)
         single_apriltag = AprilTag(img_pth, self.detector, intrinsic_params)
 
