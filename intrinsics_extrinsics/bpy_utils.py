@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-def load_fbx(fbx_pth):
+def load_fbx(fbx_pth, scale=1000):
     # remove mesh Cube
     if "Cube" in bpy.data.meshes:
         mesh = bpy.data.meshes["Cube"]
@@ -20,7 +20,7 @@ def load_fbx(fbx_pth):
         bpy.data.objects.remove(mesh)
 
     # Import FBX
-    bpy.ops.import_scene.fbx(filepath=fbx_pth, force_connect_children=True, automatic_bone_orientation=True)
+    bpy.ops.import_scene.fbx(filepath=fbx_pth, force_connect_children=True, automatic_bone_orientation=True, global_scale=scale)
 
 
 def get_keyframes():
@@ -61,7 +61,7 @@ class Keypoints:
     """
     def __init__(self, hand="l"):
         self.armature = bpy.context.scene.objects['Dongle_1B5E4344']
-        self.fingers = ["thumb_01_l", "thumb_02_l", "thumb_03_l", "thumb_tip_l",
+        self.fingers = ["root", "thumb_01_l", "thumb_02_l", "thumb_03_l", "thumb_tip_l",
                         "index_01_l", "index_02_l", "index_03_l", "index_tip_l",
                         "middle_01_l", "middle_02_l", "middle_03_l", "middle_tip_l",
                         "ring_01_l", "ring_02_l", "ring_03_l", "ring_tip_l",
