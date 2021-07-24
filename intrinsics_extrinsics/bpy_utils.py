@@ -1,7 +1,9 @@
 import bpy
 import math
 import numpy as np
-
+import sys
+import os
+from datetime import datetime
 
 def load_fbx(fbx_pth, scale=1000):
     # remove mesh Cube
@@ -94,3 +96,51 @@ class Keypoints:
             all_fingers.append(np.array(bonePos))
 
         return np.vstack(all_fingers)
+
+
+def get_manus_data(fbx_pth, manopth_pth):
+    # Obtain keypoints from fbx file
+    load_fbx(fbx_pth)
+
+    keyframes = get_keyframes()
+    keypoints = Keypoints()
+
+    all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
+
+    for idx, frame in enumerate(keyframes):
+        all_keypoints[idx, :, :] = keypoints.from_frame(frame)
+
+    # Convert keypoints to MANO model
+    sys.path.insert(1, manopth_pth)
+    from manus.manus_to_mano import get_MANO_params
+
+    mano_root = os.path.join(manopth_pth, "mano/models")
+    hand_verts, hand_joints = get_MANO_params(all_keypoints, mano_root=mano_root)
+
+    return hand_verts, hand_joints
+
+
+def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
+    """
+    Get creation time from fbx file.
+
+    Download parser for binary FBX: https://github.com/ideasman42/pyfbx_i42
+
+    Time zone offset indicating a positive or negative time difference from UTC/GMT of the form +HHMM or -HHMM,
+    where H represents decimal hour digits and M represents decimal minute digits [-23:59, +23:59].
+    """
+    sys.path.append(pyfbx_i42_pth)
+    import pyfbx.parse_bin
+    fbx_root_elem, _ = pyfbx.parse_bin.parse(fbx_pth, use_namedtuple=True)
+    creation_data = fbx_root_elem.elems[2]
+
+    assert creation_data.id == b'CreationTime'
+
+    # Get creation data
+    date_string = creation_data.props[0].decode("utf-8") + f" {offset}"
+    date_string_format = "%Y-%m-%d %H:%M:%S:%f %z"
+
+    date_and_time = datetime.strptime(date_string, date_string_format)
+    timestamp = datetime.timestamp(date_and_time)
+
+    return timestamp
