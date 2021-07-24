@@ -10,6 +10,7 @@ import re
 import cv2
 import pupil_apriltags as apriltag
 from matplotlib import pyplot as plt
+import json
 
 
 class XmlListConfig(list):
@@ -684,3 +685,27 @@ def rigid_transform_3D(A, B, transform_source=False):
         return R, t, A_rt
     else:
         return R, t
+
+
+def get_camera_timestamps(cameras_dir):
+    """
+    Returns timestamps of camera frames
+
+    Parameters
+    ----------
+    cameras_dir: Directory with timestamp.json
+
+    Returns
+    -------
+        avg_timestamps (np.array): Average (of all cameras) timestamp for each frame
+
+    """
+    json_pth = os.path.join(cameras_dir, 'timestamp.json')
+
+    with open(json_pth) as json_file:
+        data = json.load(json_file)
+
+    timestamps = np.array(list(data.values()))
+    avg_timestamps = np.mean(timestamps, axis=0)
+
+    return avg_timestamps
