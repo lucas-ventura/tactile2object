@@ -24,6 +24,9 @@ def load_fbx(fbx_pth):
 
 
 def get_keyframes():
+    """
+    Returns a list of all the frames where the object is being animated
+    """
     # get all selected objects
     selection = bpy.context.selected_objects
 
@@ -46,6 +49,16 @@ def get_keyframes():
 
 
 class Keypoints:
+    """
+    Keypoints from the object
+
+    Args:
+        hand (str): Left ("l") or right ("r") hand
+
+    Attributes:
+        armature (bpy object): Object we are taking the keypoints from
+        fingers (list): List of all the names of the keypoints
+    """
     def __init__(self, hand="l"):
         self.armature = bpy.context.scene.objects['Dongle_1B5E4344']
         self.fingers = ["thumb_01_l", "thumb_02_l", "thumb_03_l", "thumb_tip_l",
@@ -58,6 +71,18 @@ class Keypoints:
             self.fingers = [finger.replace("_l", "_r") for finger in self.fingers]
 
     def from_frame(self, frame):
+        """
+        Return keypoints from a specific frame
+
+        Parameters
+        ----------
+            frame (int): Frame
+
+        Returns
+        -------
+            keypoints (np.array): N_keypoints x 3 which contains the world position of the keypoints
+
+        """
         bpy.context.scene.frame_set(frame)
 
         all_fingers = []
