@@ -687,7 +687,7 @@ def rigid_transform_3D(A, B, transform_source=False):
         return R, t
 
 
-def get_camera_timestamps(cameras_dir, offset_s=-18000):
+def get_camera_timestamps(cameras_dir, offset_s=18000):
     """
     Returns timestamps of camera frames
 
