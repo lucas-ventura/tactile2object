@@ -687,13 +687,14 @@ def rigid_transform_3D(A, B, transform_source=False):
         return R, t
 
 
-def get_camera_timestamps(cameras_dir):
+def get_camera_timestamps(cameras_dir, offset_s=-18000):
     """
     Returns timestamps of camera frames
 
     Parameters
     ----------
-    cameras_dir: Directory with timestamp.json
+        cameras_dir: Directory with timestamp.json
+        offset_s: There is an offset of 3h between the two different recordings
 
     Returns
     -------
@@ -706,6 +707,9 @@ def get_camera_timestamps(cameras_dir):
         data = json.load(json_file)
 
     timestamps = np.array(list(data.values()))
-    avg_timestamps = np.mean(timestamps, axis=0)
+    avg_timestamps = np.mean(timestamps, axis=0) / 1_000_000_000
 
-    return avg_timestamps
+    # avg_timestamps is in nanoseconds. We need to divide the timestamps by 1_000_000_000 to get the reading in seconds (10 numbers)
+    assert int(np.log10(avg_timestamps[0]))+1 == 10
+
+    return avg_timestamps - offset_s
