@@ -115,9 +115,9 @@ def get_manus_data(fbx_pth, manopth_pth):
     from manus.manus_to_mano import get_MANO_params
 
     mano_root = os.path.join(manopth_pth, "mano/models")
-    hand_verts, hand_joints = get_MANO_params(all_keypoints, mano_root=mano_root)
+    hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
 
-    return hand_verts, hand_joints
+    return hand_verts, hand_joints, hand_faces
 
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
