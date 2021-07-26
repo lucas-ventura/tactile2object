@@ -483,13 +483,13 @@ class AprilTags:
 
         Parameters
         ----------
-        idx: Image index
-        camera: If camera is None fins corners in all cameras
-        pose_err_thld: Pose error threshold from AprilTag detection
+            idx: Image index
+            camera: If camera is None fins corners in all cameras
+            pose_err_thld: Pose error threshold from AprilTag detection
 
         Returns
         -------
-        Pixels coordinates of apriltag corners.
+            4 World coordinates of AprilTag corners + 4 world coordinates of AprilTag corners projected to the hand
         """
         # If camera is passed, return corners from camera
         if camera is not None:
