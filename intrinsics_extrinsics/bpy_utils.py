@@ -123,17 +123,17 @@ class ManusData:
         keyframes = get_keyframes()
         keypoints = Keypoints()
 
-        all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
+        self.all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
 
         for idx, frame in enumerate(keyframes):
-            all_keypoints[idx, :, :] = keypoints.from_frame(frame)
+            self.all_keypoints[idx, :, :] = keypoints.from_frame(frame)
 
         # Convert keypoints to MANO model
         sys.path.insert(1, manopth_pth)
         from manus.manus_to_mano import get_MANO_params
 
         mano_root = os.path.join(manopth_pth, "mano/models")
-        self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
+        self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(self.all_keypoints, mano_root=mano_root)
 
 
     def __len__(self):
@@ -145,7 +145,7 @@ class ManusData:
 
     def to_MANO(self, idx):
         """Returns hand verts, hand joints and hand faces from a specific idx"""
-        return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
+        return self.hand_verts[idx, :, :], self.hand_joints[idx, :, :], self.hand_faces[idx, :, :]
 
     def get_grasps_values(self, dist_open_hand=163):
         """
@@ -176,7 +176,7 @@ class ManusData:
 
         return np.array(grasp_values)
 
-    def get_grasps(self, height=80, distance=15):
+    def get_grasps(self, height=5, distance=15):
         """
         Find peaks of grasps.
 
@@ -196,7 +196,7 @@ class ManusData:
 
         return peak_indices
 
-    def plot_grasps(self, height=80, distance=15):
+    def plot_grasps(self, height=5, distance=15):
         frames_m = np.arange(0, len(self))
         grasp_values = self.get_grasps_values()
         peak_indices = self.get_grasps(height=height, distance=distance)
