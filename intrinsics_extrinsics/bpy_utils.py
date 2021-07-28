@@ -147,8 +147,6 @@ class Manus_data:
         grasps = []
 
         for hand_joints_frame in self.hand_joints:
-            d = 0
-
             # Distances from Carpus to Distal Phalanx
             d1 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[8])
             d2 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[12])
