@@ -7,6 +7,7 @@ from datetime import datetime
 from scipy.signal import find_peaks
 from matplotlib import pyplot as plt
 import open3d as o3d
+import pickle
 
 from utils import rigid_transform_3D
 
@@ -121,23 +122,29 @@ def get_manus_data(fbx_pth, manopth_pth):
 
 class ManusData:
     def __init__(self, fbx_pth, manopth_pth):
-        # Obtain keypoints from fbx file
-        load_fbx(fbx_pth)
+        pkl_pth = fbx_pth.replace(".fbx", ".p")
+        if os.path.exists(pkl_pth):
+            self.hand_verts, self.hand_joints, self.hand_faces = pickle.load(open(pkl_pth, "rb"))
 
-        keyframes = get_keyframes()
-        keypoints = Keypoints()
+        else:
+            # Obtain keypoints from fbx file
+            load_fbx(fbx_pth)
 
-        self.all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
+            keyframes = get_keyframes()
+            keypoints = Keypoints()
 
-        for idx, frame in enumerate(keyframes):
-            self.all_keypoints[idx, :, :] = keypoints.from_frame(frame)
+            all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
 
-        # Convert keypoints to MANO model
-        sys.path.insert(1, manopth_pth)
-        from manus.manus_to_mano import get_MANO_params
+            for idx, frame in enumerate(keyframes):
+                all_keypoints[idx, :, :] = keypoints.from_frame(frame)
 
-        mano_root = os.path.join(manopth_pth, "mano/models")
-        self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(self.all_keypoints, mano_root=mano_root)
+            # Convert keypoints to MANO model
+            sys.path.insert(1, manopth_pth)
+            from manus.manus_to_mano import get_MANO_params
+
+            mano_root = os.path.join(manopth_pth, "mano/models")
+            self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
+            pickle.dump((self.hand_verts, self.hand_joints, self.hand_faces), open(pkl_pth, "wb"))
 
 
     def __len__(self):
