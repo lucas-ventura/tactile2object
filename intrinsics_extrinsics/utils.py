@@ -713,3 +713,40 @@ def get_camera_timestamps(cameras_dir, offset_s=18000):
     assert int(np.log10(avg_timestamps[0]))+1 == 10
 
     return avg_timestamps - offset_s
+
+
+class Synchronizer:
+    def __init__(self, ts_p, ts_c, ts_m, pc_offset=0, mc_offset=0):
+        self.ts_pressure = ts_p - pc_offset
+        self.ts_manus = ts_m - mc_offset
+        self.ts_camera = ts_c
+
+    def pressure_to_camera(self, frame_p):
+        ts_p = self.ts_pressure[frame_p]
+        frame_c = (np.abs(self.ts_camera - ts_p)).argmin()
+        return frame_c
+
+    def pressure_to_manus(self, frame_p):
+        ts_p = self.ts_pressure[frame_p]
+        frame_m = (np.abs(self.ts_manus - ts_p)).argmin()
+        return frame_m
+
+    def camera_to_pressure(self, frame_c):
+        ts_c = self.ts_camera[frame_c]
+        frame_p = (np.abs(self.ts_pressure - ts_c)).argmin()
+        return frame_p
+
+    def camera_to_manus(self, frame_c):
+        ts_c = self.ts_camera[frame_c]
+        frame_m = (np.abs(self.ts_manus - ts_c)).argmin()
+        return frame_m
+
+    def manus_to_pressure(self, frame_m):
+        ts_m = self.ts_manus[frame_m]
+        frame_p = (np.abs(self.ts_pressure - ts_m)).argmin()
+        return frame_p
+
+    def manus_to_camera(self, frame_m):
+        ts_m = self.ts_manus[frame_m]
+        frame_c = (np.abs(self.ts_camera - ts_m)).argmin()
+        return frame_c
