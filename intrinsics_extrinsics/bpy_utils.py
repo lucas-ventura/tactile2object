@@ -212,6 +212,27 @@ class Manus_data:
         ax.set_xlabel("Manus frames")
         plt.show()
 
+    def get_ts(self, fps=24):
+        """
+        It returns an array of timestamps starting once it runs. We will find the start timestamp by finding the offset
+
+        Parameters
+        ----------
+            fps: Fps of the current manus recording
+
+        Returns
+        -------
+            ts (np.array): Array of timestamp
+        """
+        now = datetime.now()
+        ts_now = datetime.timestamp(now)
+
+        ts = ts_now + np.arange(0, len(self)) / fps
+
+        return ts
+
+
+
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
     """
     Get creation time from fbx file.
