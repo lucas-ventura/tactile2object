@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 from datetime import datetime
+from scipy.signal import find_peaks
 
 def load_fbx(fbx_pth, scale=1000):
     # remove mesh Cube
@@ -119,6 +120,55 @@ def get_manus_data(fbx_pth, manopth_pth):
 
     return hand_verts, hand_joints, hand_faces
 
+class Manus_data:
+    def __init__(self, fbx_pth, manopth_pth):
+        # Obtain keypoints from fbx file
+        load_fbx(fbx_pth)
+
+        keyframes = get_keyframes()
+        keypoints = Keypoints()
+
+        all_keypoints = np.zeros((len(keyframes), len(keypoints.fingers), 3))
+
+        for idx, frame in enumerate(keyframes):
+            all_keypoints[idx, :, :] = keypoints.from_frame(frame)
+
+        # Convert keypoints to MANO model
+        sys.path.insert(1, manopth_pth)
+        from manus.manus_to_mano import get_MANO_params
+
+        mano_root = os.path.join(manopth_pth, "mano/models")
+        self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
+
+    def get_MANOs(self):
+        """Returns hand verts, hand joints and hand faces"""
+        return self.hand_verts, self.hand_joints, self.hand_faces
+
+    def get_MANO(self, idx):
+        """Returns hand verts, hand joints and hand faces from a specific idx"""
+        return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
+
+    def get_grasps(self, heigh=150, distance=10):
+        # Distances for each frame
+        grasps = []
+
+        for hand_joints_frame in self.hand_joints:
+            d = 0
+
+            # Distances from Carpus to Distal Phalanx
+            d1 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[8])
+            d2 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[12])
+            d3 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[16])
+            d4 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[20])
+
+            d = (d1 + d2 + d3 + d4) / 4
+            # 163 is the distance when hand is fully open (no grasp).
+            grasps.append(163 - d)
+
+        # Find peaks
+        peak_indices, peak_heights = find_peaks(grasps, height=heigh, distance=distance)
+
+        return peak_indices
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
     """
