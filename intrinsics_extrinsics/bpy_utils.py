@@ -6,6 +6,10 @@ import os
 from datetime import datetime
 from scipy.signal import find_peaks
 from matplotlib import pyplot as plt
+import open3d as o3d
+
+from utils import rigid_transform_3D
+
 
 def load_fbx(fbx_pth, scale=1000):
     # remove mesh Cube
@@ -145,7 +149,7 @@ class ManusData:
 
     def to_MANO(self, idx):
         """Returns hand verts, hand joints and hand faces from a specific idx"""
-        return self.hand_verts[idx, :, :], self.hand_joints[idx, :, :], self.hand_faces[idx, :, :]
+        return self.hand_verts[idx, :, :], self.hand_joints[idx, :, :], self.hand_faces
 
     def get_grasps_values(self, dist_open_hand=163):
         """
@@ -231,6 +235,32 @@ class ManusData:
 
         return ts
 
+    def from_corners(self, frame_m, corners_w):
+        #self.hand_joints[frame_m, :, :], self.hand_faces[frame_m, :, :]
+        # World positions of AprilTag bottom corners
+        pts_corners = corners_w[4:, :]
+        # World positions of MANO verts touching AprilTag
+        pts_m_verts = self.hand_verts[frame_m, :, :][[204, 229, 144, 183], :] / 1000
+
+        R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
+
+        mesh_hand = o3d.geometry.TriangleMesh()
+        mesh_hand.vertices = o3d.utility.Vector3dVector(self.hand_verts[frame_m, :, :])
+        mesh_hand.triangles = o3d.utility.Vector3iVector(self.hand_faces)
+        mesh_hand.scale(1 / 1000, center=(0, 0, 0))
+        mesh_hand.rotate(R, center=(0, 0, 0))
+        mesh_hand.translate(t)
+        mesh_hand.compute_vertex_normals()
+        mesh_hand.paint_uniform_color([141 / 255, 184 / 255, 226 / 255])
+
+        pcd_joints = o3d.geometry.PointCloud()
+        pcd_joints.points = o3d.utility.Vector3dVector(self.hand_joints[frame_m, :, :])
+        pcd_joints.scale(1 / 1000, center=(0, 0, 0))
+        pcd_joints.rotate(R, center=(0, 0, 0))
+        pcd_joints.translate(t)
+        pcd_joints.paint_uniform_color([73 / 255, 84 / 255, 94 / 255])
+
+        return mesh_hand
 
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
