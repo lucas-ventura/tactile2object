@@ -216,27 +216,28 @@ class ManusData:
         ax.set_xlabel("Manus frames")
         plt.show()
 
-    def get_ts(self, fps=24):
+    def get_ts(self, fps=24, ts_start=None):
         """
         It returns an array of timestamps starting once it runs. We will find the start timestamp by finding the offset
 
         Parameters
         ----------
             fps: Fps of the current manus recording
+            ts_start: Start timestamp
 
         Returns
         -------
             ts (np.array): Array of timestamp
         """
-        now = datetime.now()
-        ts_now = datetime.timestamp(now)
+        if ts_start is None:
+            now = datetime.now()
+            ts_start = datetime.timestamp(now)
 
-        ts = ts_now + np.arange(0, len(self)) / fps
+        ts = ts_start + np.arange(0, len(self)) / fps
 
         return ts
 
     def from_corners(self, frame_m, corners_w):
-        #self.hand_joints[frame_m, :, :], self.hand_faces[frame_m, :, :]
         # World positions of AprilTag bottom corners
         pts_corners = corners_w[4:, :]
         # World positions of MANO verts touching AprilTag
