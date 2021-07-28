@@ -5,6 +5,7 @@ import sys
 import os
 from datetime import datetime
 from scipy.signal import find_peaks
+from matplotlib import pyplot as plt
 
 def load_fbx(fbx_pth, scale=1000):
     # remove mesh Cube
@@ -134,6 +135,10 @@ class Manus_data:
         mano_root = os.path.join(manopth_pth, "mano/models")
         self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
 
+
+    def __len__(self):
+        return self.hand_joints.shape[0]
+
     def to_MANOs(self):
         """Returns hand verts, hand joints and hand faces"""
         return self.hand_verts, self.hand_joints, self.hand_faces
@@ -142,14 +147,14 @@ class Manus_data:
         """Returns hand verts, hand joints and hand faces from a specific idx"""
         return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
 
-    def get_grasps(self, heigh=150, distance=10):
+    def get_grasps(self, height=80, distance=15):
         """
         Find peaks of grasps. A grasp is measured as the average distance of the fingers from a fully opened hand pose.
         e.g. A value close to 0 means that the hand is open.
 
         Parameters
         ----------
-            heigh: Required height of peaks.
+            height: Required height of peaks.
             distance: Required minimal horizontal distance in samples between neighbouring peaks.
 
         Returns
@@ -158,7 +163,7 @@ class Manus_data:
 
         """
         # Distances for each frame
-        grasps = []
+        grasp_values = []
 
         for hand_joints_frame in self.hand_joints:
             # Distances from Carpus to Distal Phalanx
@@ -169,12 +174,27 @@ class Manus_data:
 
             d = (d1 + d2 + d3 + d4) / 4
             # 163 is the distance when the hand is fully open (no grasp).
-            grasps.append(163 - d)
+            grasp_values.append(163 - d)
 
         # Find peaks
-        peak_indices, peak_heights = find_peaks(grasps, height=heigh, distance=distance)
+        peak_indices, peak_heights = find_peaks(grasp_values, height=height, distance=distance)
 
-        return peak_indices
+        return np.array(grasp_values), peak_indices
+
+    def plot_grasps(self, height=80, distance=15):
+        frames_m = np.arange(0, len(self))
+        grasp_values, peak_indices = self.get_grasps(height=height, distance=distance)
+
+        fig = plt.figure(figsize=(10, 4))
+        ax = fig.add_subplot()
+
+        # Plot pressure
+        ax.plot(frames_m, grasp_values)
+        ax.plot(peak_indices, grasp_values[peak_indices], 'o', color='orange')
+
+        ax.set_ylabel("Hand pressure")
+        ax.set_xlabel("Pressure frames")
+        plt.show()
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
     """
