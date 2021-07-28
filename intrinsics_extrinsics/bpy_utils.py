@@ -208,8 +208,8 @@ class Manus_data:
         ax.plot(frames_m, grasp_values)
         ax.plot(peak_indices, grasp_values[peak_indices], 'o', color='orange')
 
-        ax.set_ylabel("Hand pressure")
-        ax.set_xlabel("Pressure frames")
+        ax.set_ylabel("Grasp value")
+        ax.set_xlabel("Manus frames")
         plt.show()
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
