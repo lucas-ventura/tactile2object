@@ -143,6 +143,20 @@ class Manus_data:
         return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
 
     def get_grasps(self, heigh=150, distance=10):
+        """
+        Find peaks of grasps. A grasp is measured as the average distance of the fingers from a fully opened hand pose.
+        e.g. A value close to 0 means that the hand is open.
+
+        Parameters
+        ----------
+            heigh: Required height of peaks.
+            distance: Required minimal horizontal distance in samples between neighbouring peaks.
+
+        Returns
+        -------
+            Indices: Indices of grasp peaks
+
+        """
         # Distances for each frame
         grasps = []
 
@@ -154,7 +168,7 @@ class Manus_data:
             d4 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[20])
 
             d = (d1 + d2 + d3 + d4) / 4
-            # 163 is the distance when hand is fully open (no grasp).
+            # 163 is the distance when the hand is fully open (no grasp).
             grasps.append(163 - d)
 
         # Find peaks
