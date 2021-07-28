@@ -115,7 +115,7 @@ def get_manus_data(fbx_pth, manopth_pth):
 
     return hand_verts, hand_joints, hand_faces
 
-class Manus_data:
+class ManusData:
     def __init__(self, fbx_pth, manopth_pth):
         # Obtain keypoints from fbx file
         load_fbx(fbx_pth)
