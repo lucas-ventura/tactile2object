@@ -176,7 +176,7 @@ class Manus_data:
 
         return np.array(grasp_values)
 
-    def get_peak_grasps(self, height=80, distance=15):
+    def get_grasps_idx(self, height=80, distance=15):
         """
         Find peaks of grasps.
 
@@ -199,7 +199,7 @@ class Manus_data:
     def plot_grasps(self, height=80, distance=15):
         frames_m = np.arange(0, len(self))
         grasp_values = self.get_grasps()
-        peak_indices = self.get_peak_grasps(height=height, distance=distance)
+        peak_indices = self.get_grasps_idx(height=height, distance=distance)
 
         fig = plt.figure(figsize=(10, 4))
         ax = fig.add_subplot()
