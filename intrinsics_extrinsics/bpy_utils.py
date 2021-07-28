@@ -12,15 +12,9 @@ def load_fbx(fbx_pth, scale=1000):
         mesh = bpy.data.meshes["Cube"]
         bpy.data.meshes.remove(mesh)
 
-    # remove Camera
-    if "Camera" in bpy.data.objects:
-        mesh = bpy.data.objects["Camera"]
-        bpy.data.objects.remove(mesh)
-
-    # remove Light
-    if "Light" in bpy.data.objects:
-        mesh = bpy.data.objects["Light"]
-        bpy.data.objects.remove(mesh)
+    # Remove all objects
+    for obj in bpy.data.objects:
+        bpy.data.objects.remove(obj)
 
     # Import FBX
     bpy.ops.import_scene.fbx(filepath=fbx_pth, force_connect_children=True, automatic_bone_orientation=True, global_scale=scale)
@@ -140,11 +134,11 @@ class Manus_data:
         mano_root = os.path.join(manopth_pth, "mano/models")
         self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
 
-    def get_MANOs(self):
+    def to_MANOs(self):
         """Returns hand verts, hand joints and hand faces"""
         return self.hand_verts, self.hand_joints, self.hand_faces
 
-    def get_MANO(self, idx):
+    def to_MANO(self, idx):
         """Returns hand verts, hand joints and hand faces from a specific idx"""
         return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
 
