@@ -147,7 +147,7 @@ class Manus_data:
         """Returns hand verts, hand joints and hand faces from a specific idx"""
         return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
 
-    def get_grasps(self, dist_open_hand=163):
+    def get_grasps_values(self, dist_open_hand=163):
         """
         A grasp is measured as the average distance of the fingers from a fully opened hand pose.
         e.g. A value close to 0 means that the hand is open.
@@ -172,11 +172,11 @@ class Manus_data:
             d4 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[20])
 
             d = (d1 + d2 + d3 + d4) / 4
-            grasp_values.append(163 - d)
+            grasp_values.append(dist_open_hand - d)
 
         return np.array(grasp_values)
 
-    def get_grasps_idx(self, height=80, distance=15):
+    def get_grasps(self, height=80, distance=15):
         """
         Find peaks of grasps.
 
@@ -189,7 +189,7 @@ class Manus_data:
         -------
 
         """
-        grasp_values = self.get_grasps()
+        grasp_values = self.get_grasps_values()
 
         # Find peaks
         peak_indices, peak_heights = find_peaks(grasp_values, height=height, distance=distance)
@@ -198,8 +198,8 @@ class Manus_data:
 
     def plot_grasps(self, height=80, distance=15):
         frames_m = np.arange(0, len(self))
-        grasp_values = self.get_grasps()
-        peak_indices = self.get_grasps_idx(height=height, distance=distance)
+        grasp_values = self.get_grasps_values()
+        peak_indices = self.get_grasps(height=height, distance=distance)
 
         fig = plt.figure(figsize=(10, 4))
         ax = fig.add_subplot()
