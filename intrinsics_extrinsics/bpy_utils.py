@@ -147,15 +147,14 @@ class Manus_data:
         """Returns hand verts, hand joints and hand faces from a specific idx"""
         return self.hand_verts[idx,:,:], self.hand_joints[idx,:,:], self.hand_faces[idx,:,:]
 
-    def get_grasps(self, height=80, distance=15):
+    def get_grasps(self, dist_open_hand=163):
         """
-        Find peaks of grasps. A grasp is measured as the average distance of the fingers from a fully opened hand pose.
+        A grasp is measured as the average distance of the fingers from a fully opened hand pose.
         e.g. A value close to 0 means that the hand is open.
 
         Parameters
         ----------
-            height: Required height of peaks.
-            distance: Required minimal horizontal distance in samples between neighbouring peaks.
+            dist_open_hand: distance when the hand is fully open (no grasp).
 
         Returns
         -------
@@ -173,17 +172,34 @@ class Manus_data:
             d4 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[20])
 
             d = (d1 + d2 + d3 + d4) / 4
-            # 163 is the distance when the hand is fully open (no grasp).
             grasp_values.append(163 - d)
+
+        return np.array(grasp_values)
+
+    def get_peak_grasps(self, height=80, distance=15):
+        """
+        Find peaks of grasps.
+
+        Parameters
+        ----------
+        height: Required height of peaks.
+        distance: Required minimal horizontal distance in samples between neighbouring peaks.
+
+        Returns
+        -------
+
+        """
+        grasp_values = self.get_grasps()
 
         # Find peaks
         peak_indices, peak_heights = find_peaks(grasp_values, height=height, distance=distance)
 
-        return np.array(grasp_values), peak_indices
+        return peak_indices
 
     def plot_grasps(self, height=80, distance=15):
         frames_m = np.arange(0, len(self))
-        grasp_values, peak_indices = self.get_grasps(height=height, distance=distance)
+        grasp_values = self.get_grasps()
+        peak_indices = self.get_peak_grasps(height=height, distance=distance)
 
         fig = plt.figure(figsize=(10, 4))
         ax = fig.add_subplot()
