@@ -527,9 +527,9 @@ def save_view_point(pcd, viewpoint_file="data/viewpoint.json"):
     vis.destroy_window()
 
 
-def load_view_point(pcd, viewpoint_file="data/viewpoint.json"):
+def load_view_point(pcd, viewpoint_file="data/viewpoint.json", width=1920, height=1080):
     vis = o3d.visualization.Visualizer()
-    vis.create_window()
+    vis.create_window(width=width, height=height)
     ctr = vis.get_view_control()
     param = o3d.io.read_pinhole_camera_parameters(viewpoint_file)
     if isinstance(pcd, list):
@@ -543,9 +543,9 @@ def load_view_point(pcd, viewpoint_file="data/viewpoint.json"):
     vis.destroy_window()
 
 
-def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json"):
+def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json", width=1920, height=1080):
     vis = o3d.visualization.Visualizer()
-    vis.create_window(visible=False)
+    vis.create_window(width=width, height=height, visible=False)
     ctr = vis.get_view_control()
     param = o3d.io.read_pinhole_camera_parameters(viewpoint_file)
     if isinstance(pcd, list):
