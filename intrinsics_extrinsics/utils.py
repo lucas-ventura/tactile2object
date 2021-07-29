@@ -737,6 +737,8 @@ class Synchronizer:
         return frame_p
 
     def camera_to_manus(self, frame_c):
+        if isinstance(frame_c, str):
+            frame_c = int(frame_c)
         ts_c = self.ts_camera[frame_c]
         frame_m = (np.abs(self.ts_manus - ts_c)).argmin()
         return frame_m
