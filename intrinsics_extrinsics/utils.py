@@ -561,8 +561,13 @@ def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json", wi
     ctr.convert_from_pinhole_camera_parameters(param)
     vis.poll_events()
     vis.update_renderer()
-    vis.capture_screen_image(filename)
-    vis.destroy_window()
+    if filename is None:
+        img = vis.capture_screen_float_buffer()
+        vis.destroy_window()
+        return np.asarray(img)
+    else:
+        vis.capture_screen_image(filename)
+        vis.destroy_window()
 
 
 def get_balls_from_corners(corners_w, color=[0, 1, 0]):
