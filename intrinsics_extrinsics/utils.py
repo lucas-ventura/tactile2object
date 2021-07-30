@@ -564,7 +564,7 @@ def save_draw_geometries(pcd, filename, viewpoint_file="data/viewpoint.json", wi
     if filename is None:
         img = vis.capture_screen_float_buffer()
         vis.destroy_window()
-        return np.asarray(img) * 255
+        return np.asarray(img)
     else:
         vis.capture_screen_image(filename)
         vis.destroy_window()
