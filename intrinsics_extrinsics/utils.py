@@ -8,7 +8,7 @@ import copy
 import matplotlib.image as mpimg
 import re
 import cv2
-import pupil_apriltags as apriltag
+import pupil_apriltags as pupil_apriltags
 from matplotlib import pyplot as plt
 import json
 
@@ -466,7 +466,7 @@ class AprilTags:
         self.extrinsics = extrinsics
         self.cameras_dir = cameras_dir
         self.cameras = cameras
-        self.detector = apriltag.Detector(families="tag36h11")
+        self.detector = pupil_apriltags.Detector(families="tag36h11")
         self.tag_size = tag_size
 
     def from_idx_camera(self, idx, camera):
@@ -491,6 +491,9 @@ class AprilTags:
         -------
             4 World coordinates of AprilTag corners + 4 world coordinates of AprilTag corners projected to the hand
         """
+        if isinstance(idx, int):
+            idx = str(idx).zfill(6)
+
         # If camera is passed, return corners from camera
         if camera is not None:
             return self.from_idx_camera(idx, camera).corners_w
