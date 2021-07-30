@@ -728,7 +728,10 @@ class Synchronizer:
 
     def pressure_to_manus(self, frame_p):
         ts_p = self.ts_pressure[frame_p]
-        frame_m = (np.abs(self.ts_manus - ts_p)).argmin()
+        if ts_p.ndim == 0:
+            frame_m = (np.abs(self.ts_manus - ts_p)).argmin()
+        else:
+            frame_m = np.abs(np.tile(self.ts_manus, (ts_p.shape[0], 1)).T - ts_p).argmin(axis=0)
         return frame_m
 
     def camera_to_pressure(self, frame_c):
