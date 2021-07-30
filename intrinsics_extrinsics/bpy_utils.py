@@ -270,6 +270,32 @@ class ManusData:
 
         return mesh_hand
 
+    def hand_verts_from_corners(self, frame_m, corners_w):
+        """
+        Return hand_verts oriented with the AprilTag corners
+
+        Parameters
+        ----------
+            frame_m (int): Manus frame
+            corners_w (np.array): Corners of the AprilTag
+
+        Returns
+        -------
+            hand_verts (np.array): Hand verts rotated according to the AprilTag location
+        """
+        # World positions of AprilTag bottom corners
+        pts_corners = corners_w[4:, :]
+
+        # Scale hand_verts
+        scaled_hand_verts = self.hand_verts[frame_m, :, :] / 1000
+
+        # World positions of MANO verts touching AprilTag
+        pts_m_verts = scaled_hand_verts[[204, 229, 144, 183], :]
+
+        R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
+
+        return np.matmul(scaled_hand_verts, R.T) + t.T
+
 
 def get_fbx_creation_time(fbx_pth, pyfbx_i42_pth, offset="+0000"):
     """
