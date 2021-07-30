@@ -491,7 +491,7 @@ class AprilTags:
         -------
             4 World coordinates of AprilTag corners + 4 world coordinates of AprilTag corners projected to the hand
         """
-        if isinstance(idx, int):
+        if not isinstance(idx, str):
             idx = str(idx).zfill(6)
 
         # If camera is passed, return corners from camera
