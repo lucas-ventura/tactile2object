@@ -223,7 +223,7 @@ class ManusData:
         ax.set_xlabel("Manus frames")
         plt.show()
 
-    def get_ts(self, fps=24, ts_start=None):
+    def get_ts(self, fps=20, ts_start=None):
         """
         It returns an array of timestamps starting once it runs. We will find the start timestamp by finding the offset
 
