@@ -99,7 +99,21 @@ class Keypoints:
         return np.vstack(all_fingers)
 
 
-def get_manus_data(fbx_pth, manopth_pth):
+def get_manus_data(fbx_pth, manopth_pth, mano_scale=0.77):
+    """
+
+    Parameters
+    ----------
+        fbx_pth (str): Path to fbx file
+        manopth_pth (str): manopth path
+        mano_scale (float): Manus scale so keypoints have a similar bone length.
+                             This will lead to better MANO pose estimation.
+
+    Returns
+    -------
+        hand_verts, hand_joints, hand_faces
+
+    """
     # Obtain keypoints from fbx file
     load_fbx(fbx_pth)
 
@@ -116,12 +130,21 @@ def get_manus_data(fbx_pth, manopth_pth):
     from manus.manus_to_mano import get_MANO_params
 
     mano_root = os.path.join(manopth_pth, "mano/models")
-    hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
+    hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints * mano_scale, mano_root=mano_root)
 
-    return hand_verts, hand_joints, hand_faces
+    return hand_verts / mano_scale, hand_joints / mano_scale, hand_faces
 
 class ManusData:
-    def __init__(self, fbx_pth, manopth_pth):
+    def __init__(self, fbx_pth, manopth_pth, mano_scale=0.77):
+        """
+
+        Parameters
+        ----------
+            fbx_pth (str): Path to fbx file
+            manopth_pth (str): manopth path
+            mano_scale (float): Manus scale so keypoints have a similar bone length.
+                                This will lead to better MANO pose estimation.
+        """
         pkl_pth = fbx_pth.replace(".fbx", ".p")
         if os.path.exists(pkl_pth):
             self.hand_verts, self.hand_joints, self.hand_faces = pickle.load(open(pkl_pth, "rb"))
@@ -143,7 +166,10 @@ class ManusData:
             from manus.manus_to_mano import get_MANO_params
 
             mano_root = os.path.join(manopth_pth, "mano/models")
-            self.hand_verts, self.hand_joints, self.hand_faces = get_MANO_params(all_keypoints, mano_root=mano_root)
+            hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints * mano_scale, mano_root=mano_root)
+            self.hand_verts = hand_verts / mano_scale
+            self.hand_joints = hand_joints / mano_scale
+            self.hand_faces = hand_faces
             pickle.dump((self.hand_verts, self.hand_joints, self.hand_faces), open(pkl_pth, "wb"))
 
 
