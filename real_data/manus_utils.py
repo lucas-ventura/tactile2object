@@ -124,7 +124,7 @@ class Keypoints:
 
 
 class ManusData:
-    def __init__(self, manus_pth, manopth_pth, mano_scale=0.95, ts_offset=5*3600):
+    def __init__(self, manus_pth, manopth_pth, mano_scale=1., ts_offset=5*3600):
         """
 
         Parameters
