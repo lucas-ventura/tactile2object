@@ -425,7 +425,7 @@ class AprilTag:
             n = np.cross(self.corners_w_t[3] - self.corners_w_t[0], self.corners_w_t[1] - self.corners_w_t[0])
             n = n / np.sqrt(np.sum(n ** 2))
             # Corners of AprilTag in world coordinates projected to the hand
-            self.corners_w_h = self.corners_w_t + n*0.02
+            self.corners_w_h = self.corners_w_t + n*0.025
             # All AprilTag corners (corners_w_t + corners_w_h)
             self.corners_w = np.concatenate((self.corners_w_t, self.corners_w_h))
 
