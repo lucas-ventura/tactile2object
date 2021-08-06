@@ -8,6 +8,8 @@ import sys
 from scipy.signal import find_peaks
 from matplotlib import pyplot as plt
 import open3d as o3d
+from scipy.spatial.transform import Rotation
+
 
 from utils import rigid_transform_3D
 
@@ -124,7 +126,7 @@ class Keypoints:
 
 
 class ManusData:
-    def __init__(self, manus_pth, manopth_pth, manus_scale=1., mano_scale=1.2, ts_offset=5*3600):
+    def __init__(self, manus_pth, manopth_pth, manus_scale=1., mano_scale=1.15, ts_offset=5*3600):
         """
 
         Parameters
@@ -260,6 +262,7 @@ class ManusData:
         pts_corners = corners_w[4:, :]
         # World positions of MANO verts touching AprilTag
         pts_m_verts = self.hand_verts[frame_m, :, :][[204, 229, 145, 20], :] / 1000
+        pts_m_verts = rotate_pts(pts_m_verts)
 
         R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
 
@@ -302,7 +305,31 @@ class ManusData:
 
         # World positions of MANO verts touching AprilTag
         pts_m_verts = scaled_hand_verts[[204, 229, 145, 20], :]
+        pts_m_verts = rotate_pts(pts_m_verts)
 
         R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
 
         return np.matmul(scaled_hand_verts, R.T) + t.T
+
+
+def rotate_pts(pts_m_verts, rotation_degrees=-20):
+    center_m_verts = pts_m_verts.mean(axis=0)
+
+    normal_m_verts = np.cross(pts_m_verts[2] - pts_m_verts[1], pts_m_verts[0] - pts_m_verts[1])
+    normal_m_verts = normal_m_verts / np.linalg.norm(normal_m_verts)
+    translated_points = pts_m_verts - center_m_verts
+
+    rotated_pts = np.zeros((4, 3))
+
+    rotation_radians = np.radians(rotation_degrees)
+    rotation_axis = normal_m_verts
+
+    rotation_vector = rotation_radians * rotation_axis
+    rotation = Rotation.from_rotvec(rotation_vector)
+
+    rotated_pts[0, :] = rotation.apply(translated_points[0]) + center_m_verts
+    rotated_pts[1, :] = rotation.apply(translated_points[1]) + center_m_verts
+    rotated_pts[2, :] = rotation.apply(translated_points[2]) + center_m_verts
+    rotated_pts[3, :] = rotation.apply(translated_points[3]) + center_m_verts
+
+    return rotated_pts
