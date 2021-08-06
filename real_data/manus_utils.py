@@ -124,7 +124,7 @@ class Keypoints:
 
 
 class ManusData:
-    def __init__(self, manus_pth, manopth_pth, mano_scale=1., ts_offset=5*3600):
+    def __init__(self, manus_pth, manopth_pth, manus_scale=1., mano_scale=1.2, ts_offset=5*3600):
         """
 
         Parameters
@@ -156,9 +156,9 @@ class ManusData:
             from manus.manus_to_mano import get_MANO_params
 
             mano_root = os.path.join(manopth_pth, "mano/models")
-            hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints * mano_scale, mano_root=mano_root)
-            self.hand_verts = hand_verts / mano_scale
-            self.hand_joints = hand_joints / mano_scale
+            hand_verts, hand_joints, hand_faces = get_MANO_params(all_keypoints * manus_scale, mano_root=mano_root)
+            self.hand_verts = hand_verts * mano_scale / manus_scale
+            self.hand_joints = hand_joints * mano_scale / manus_scale
             self.hand_faces = hand_faces
             pickle.dump((self.hand_verts, self.hand_joints, self.hand_faces), open(pkl_pth, "wb"))
 
@@ -259,7 +259,7 @@ class ManusData:
         # World positions of AprilTag bottom corners
         pts_corners = corners_w[4:, :]
         # World positions of MANO verts touching AprilTag
-        pts_m_verts = self.hand_verts[frame_m, :, :][[204, 229, 144, 183], :] / 1000
+        pts_m_verts = self.hand_verts[frame_m, :, :][[204, 229, 145, 20], :] / 1000
 
         R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
 
@@ -301,7 +301,7 @@ class ManusData:
         scaled_hand_verts = self.hand_verts[frame_m, :, :] / 1000
 
         # World positions of MANO verts touching AprilTag
-        pts_m_verts = scaled_hand_verts[[204, 229, 144, 183], :]
+        pts_m_verts = scaled_hand_verts[[204, 229, 145, 20], :]
 
         R, t = rigid_transform_3D(pts_m_verts.T, pts_corners.T)
 
