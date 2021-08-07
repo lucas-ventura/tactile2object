@@ -126,7 +126,7 @@ class Keypoints:
 
 
 class ManusData:
-    def __init__(self, manus_pth, manopth_pth, manus_scale=1., mano_scale=1.15, ts_offset=5*3600):
+    def __init__(self, manus_pth, manopth_pth, manus_scale=0.96, mano_scale=1.15, ts_offset=5*3600):
         """
 
         Parameters
@@ -134,12 +134,16 @@ class ManusData:
             ts (numpy): Start timestamp
             manus_pth (str): Path to fbx file
             manopth_pth (str): manopth path
-            mano_scale (float): Manus scale so keypoints have a similar bone length.
+            manus_scale (float): Manus scale so keypoints have a similar bone length.
                                 This will lead to better MANO pose estimation.
+            mano_scale (float): Scale MANO mesh so it matches the hand in the image.
         """
         # Timestamp from mvnx is in milliseconds, we first need to convert it to seconds.
         # For some reason it has a 5h offset
         self.ts = pd.read_excel(manus_pth, sheet_name="recDateMSecsSinceEpoch", header=None)[0][0] / 1_000 - ts_offset
+
+        self.mano_scale = mano_scale
+        self.manus_scale = manus_scale
 
         pkl_pth = manus_pth.replace(".xlsx", ".p")
         if os.path.exists(pkl_pth):
@@ -200,7 +204,7 @@ class ManusData:
             d4 = np.linalg.norm(hand_joints_frame[0] - hand_joints_frame[20])
 
             d = (d1 + d2 + d3 + d4) / 4
-            grasp_values.append(dist_open_hand - d)
+            grasp_values.append(dist_open_hand * self.mano_scale / self.manus_scale - d)
 
         return np.array(grasp_values)
 
